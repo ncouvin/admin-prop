@@ -1,82 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Property, PropertyType, Service } from '../types';
-import { mockService } from '../services/mockData';
 import { useAuth } from '../context/AuthContext';
-import { Save, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { mockService } from '../services/mockData';
+import { uploadToCloudinary } from '../services/cloudinary';
+import type { Property, Service } from '../types';
+import { Save, ArrowLeft, Upload, X, Plus, Trash2 } from 'lucide-react';
 
 const PropertyForm: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const isEdit = !!id;
+    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     const [formData, setFormData] = useState<Partial<Property>>({
-        name: '',
-        address: { street: '', city: '', country: 'Argentina', floor: '', apartment: '' },
         type: 'apartment',
         currency: 'USD',
-        features: { rooms: 1, bathrooms: 1, coveredArea: 0, uncoveredArea: 0, amenities: [] },
+        features: {
+            rooms: 1,
+            bathrooms: 1,
+            coveredArea: 0,
+            uncoveredArea: 0,
+            amenities: []
+        },
         images: [],
-        documents: []
+        documents: [],
+        address: {
+            street: '',
+            city: '',
+            country: 'Argentina'
+        }
     });
 
     const [services, setServices] = useState<Partial<Service>[]>([]);
 
     useEffect(() => {
-        if (isEdit && id) {
-            const props = mockService.getProperties();
-            const found = props.find(p => p.id === id);
-            if (found) {
-                setFormData(found);
+        if (id) {
+            const properties = mockService.getProperties();
+            const property = properties.find(p => p.id === id);
+            if (property) {
+                setFormData(property);
                 const propServices = mockService.getServices(id);
                 setServices(propServices);
             }
         }
-    }, [isEdit, id]);
+    }, [id]);
 
-    const handleAddService = () => {
-        setServices([...services, { name: '', type: 'other', periodicity: 'monthly', providerId: '' }]);
-    };
-
-    const handleRemoveService = (index: number) => {
-        const newServices = [...services];
-        newServices.splice(index, 1);
-        setServices(newServices);
-    };
-
-    const handleServiceChange = (index: number, field: keyof Service, value: any) => {
-        const newServices = [...services];
-        newServices[index] = { ...newServices[index], [field]: value };
-        setServices(newServices);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!user) return;
-
-        const propertyData = {
-            ...formData,
-            id: isEdit ? id! : Math.random().toString(36).substr(2, 9),
-            ownerId: user.id,
-        } as Property;
-
-        if (isEdit) {
-            mockService.updateProperty(propertyData);
-            // Update services: delete all and recreate (simple approach for mock)
-            const existingServices = mockService.getServices(id!);
-            existingServices.forEach(s => mockService.deleteService(s.id));
-            services.forEach(s => {
-                mockService.addService({ ...s, id: Math.random().toString(36).substr(2, 9), propertyId: id! } as Service);
-            });
-        } else {
-            const newProp = mockService.addProperty(propertyData);
-            services.forEach(s => {
-                mockService.addService({ ...s, id: Math.random().toString(36).substr(2, 9), propertyId: newProp.id } as Service);
-            });
-        }
-        navigate('/properties');
-        navigate('/properties');
+    const handleChange = (field: keyof Property, value: any) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleAddressChange = (field: keyof Property['address'], value: string) => {
@@ -93,117 +64,256 @@ const PropertyForm: React.FC = () => {
         }));
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setUploading(true);
+        try {
+            const file = e.target.files[0];
+            const url = await uploadToCloudinary(file);
+
+            setFormData(prev => ({
+                ...prev,
+                images: [...(prev.images || []), url]
+            }));
+        } catch (error) {
+            console.error("Error uploading image: ", error);
+            alert("Error al subir la imagen. Por favor intente nuevamente.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleRemoveImage = (index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images?.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleAddService = () => {
+        setServices(prev => [...prev, {
+            name: '',
+            type: 'other',
+            periodicity: 'monthly',
+            providerId: ''
+        }]);
+    };
+
+    const handleServiceChange = (index: number, field: keyof Service, value: any) => {
+        const newServices = [...services];
+        newServices[index] = { ...newServices[index], [field]: value };
+        setServices(newServices);
+    };
+
+    const handleRemoveService = (index: number) => {
+        setServices(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user) return;
+        setLoading(true);
+
+        try {
+            const propertyData = {
+                ...formData,
+                ownerId: user.id,
+                id: id || Math.random().toString(36).substr(2, 9)
+            } as Property;
+
+            if (id) {
+                mockService.updateProperty(propertyData);
+            } else {
+                mockService.addProperty(propertyData);
+            }
+
+            // Save services
+            // First delete existing services if editing (simplified approach)
+            if (id) {
+                const existingServices = mockService.getServices(id);
+                existingServices.forEach(s => mockService.deleteService(s.id));
+            }
+
+            // Add all services
+            services.forEach(service => {
+                if (service.name) {
+                    mockService.addService({
+                        ...service,
+                        id: Math.random().toString(36).substr(2, 9),
+                        propertyId: propertyData.id,
+                        type: service.type || 'other',
+                        periodicity: service.periodicity || 'monthly'
+                    } as Service);
+                }
+            });
+
+            navigate('/properties');
+        } catch (error) {
+            console.error('Error saving property:', error);
+            alert('Error al guardar la propiedad');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-                <button onClick={() => navigate('/properties')} className="btn btn-secondary" style={{ padding: '0.5rem' }}>
+        <div className="container fade-in">
+            <div className="header-actions">
+                <button className="btn btn-secondary" onClick={() => navigate('/properties')}>
                     <ArrowLeft size={20} />
+                    Volver
                 </button>
-                <h2 style={{ fontSize: '1.5rem' }}>{isEdit ? 'Editar Propiedad' : 'Nueva Propiedad'}</h2>
+                <h1>{id ? 'Editar Propiedad' : 'Nueva Propiedad'}</h1>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                {/* Sección 1: Información General */}
+            <form onSubmit={handleSubmit} className="form-grid">
+                {/* Sección 1: Información Básica */}
                 <section className="card">
-                    <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                        Información General
-                    </h3>
-
-                    <div style={{ display: 'grid', gap: '1rem' }}>
+                    <h3>Información Básica</h3>
+                    <div className="grid-2">
                         <div>
-                            <label className="label">Nombre de la Propiedad (Alias)</label>
+                            <label className="label">Nombre Identificativo</label>
                             <input
                                 type="text"
                                 className="input"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 placeholder="Ej: Depto Mar del Plata"
+                                value={formData.name || ''}
+                                onChange={e => handleChange('name', e.target.value)}
                                 required
                             />
                         </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <div>
-                                <label className="label">Tipo de Propiedad</label>
-                                <select
-                                    className="input"
-                                    value={formData.type}
-                                    onChange={e => setFormData({ ...formData, type: e.target.value as PropertyType })}
-                                >
-                                    <option value="apartment">Departamento</option>
-                                    <option value="house">Casa</option>
-                                    <option value="ph">PH</option>
-                                    <option value="garage">Cochera</option>
-                                    <option value="store">Local</option>
-                                    <option value="warehouse">Galpón</option>
-                                    <option value="land">Lote/Campo</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="label">Moneda</label>
-                                <select
-                                    className="input"
-                                    value={formData.currency}
-                                    onChange={e => setFormData({ ...formData, currency: e.target.value as any })}
-                                >
-                                    <option value="USD">Dólar (USD)</option>
-                                    <option value="ARS">Peso Arg (ARS)</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label className="label">Tipo de Propiedad</label>
+                            <select
+                                className="input"
+                                value={formData.type}
+                                onChange={e => handleChange('type', e.target.value)}
+                            >
+                                <option value="apartment">Departamento</option>
+                                <option value="house">Casa</option>
+                                <option value="garage">Cochera</option>
+                                <option value="store">Local</option>
+                                <option value="warehouse">Galpón</option>
+                                <option value="land">Terreno</option>
+                                <option value="other">Otro</option>
+                            </select>
                         </div>
+                    </div>
 
+                    <div className="grid-2">
                         <div>
                             <label className="label">Dirección</label>
                             <input
                                 type="text"
                                 className="input"
-                                value={formData.address?.street}
-                                onChange={e => handleAddressChange('street', e.target.value)}
                                 placeholder="Calle y Altura"
+                                value={formData.address?.street || ''}
+                                onChange={e => handleAddressChange('street', e.target.value)}
                                 required
                             />
                         </div>
+                        <div>
+                            <label className="label">Ciudad/Zona</label>
+                            <input
+                                type="text"
+                                className="input"
+                                value={formData.address?.city || ''}
+                                onChange={e => handleAddressChange('city', e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-                            <div>
-                                <label className="label">Ciudad/Provincia</label>
-                                <input
-                                    type="text"
+                    <div className="grid-2">
+                        <div>
+                            <label className="label">Piso</label>
+                            <input
+                                type="text"
+                                className="input"
+                                value={formData.address?.floor || ''}
+                                onChange={e => handleAddressChange('floor', e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="label">Depto/Unidad</label>
+                            <input
+                                type="text"
+                                className="input"
+                                value={formData.address?.apartment || ''}
+                                onChange={e => handleAddressChange('apartment', e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid-2">
+                        <div>
+                            <label className="label">Valor de Compra</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <select
                                     className="input"
-                                    value={formData.address?.city}
-                                    onChange={e => handleAddressChange('city', e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="label">Piso</label>
+                                    style={{ width: '80px' }}
+                                    value={formData.currency}
+                                    onChange={e => handleChange('currency', e.target.value)}
+                                >
+                                    <option value="USD">USD</option>
+                                    <option value="ARS">ARS</option>
+                                    <option value="EUR">EUR</option>
+                                </select>
                                 <input
-                                    type="text"
+                                    type="number"
                                     className="input"
-                                    value={formData.address?.floor}
-                                    onChange={e => handleAddressChange('floor', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label className="label">Depto</label>
-                                <input
-                                    type="text"
-                                    className="input"
-                                    value={formData.address?.apartment}
-                                    onChange={e => handleAddressChange('apartment', e.target.value)}
+                                    value={formData.purchaseValue || ''}
+                                    onChange={e => handleChange('purchaseValue', parseFloat(e.target.value))}
+                                    placeholder="0.00"
                                 />
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Sección 2: Características */}
+                {/* Sección 2: Fotos */}
                 <section className="card">
-                    <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                        Características
-                    </h3>
+                    <h3>Fotos</h3>
+                    <div className="image-upload-container">
+                        <div className="image-grid">
+                            {formData.images?.map((url, index) => (
+                                <div key={index} className="image-preview">
+                                    <img src={url} alt={`Propiedad ${index + 1}`} />
+                                    <button
+                                        type="button"
+                                        className="delete-btn"
+                                        onClick={() => handleRemoveImage(index)}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                            <label className={`upload-btn ${uploading ? 'disabled' : ''}`}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    disabled={uploading}
+                                    hidden
+                                />
+                                {uploading ? (
+                                    <span>Subiendo...</span>
+                                ) : (
+                                    <>
+                                        <Upload size={24} />
+                                        <span>Agregar Foto</span>
+                                    </>
+                                )}
+                            </label>
+                        </div>
+                    </div>
+                </section>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* Sección 3: Características */}
+                <section className="card">
+                    <h3>Características</h3>
+                    <div className="grid-2">
                         <div>
                             <label className="label">Ambientes</label>
                             <input
@@ -245,7 +355,7 @@ const PropertyForm: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Sección 3: Impuestos y Servicios */}
+                {/* Sección 4: Impuestos y Servicios */}
                 <section className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
                         <h3>Impuestos y Servicios</h3>
@@ -299,9 +409,9 @@ const PropertyForm: React.FC = () => {
                     <button type="button" className="btn btn-secondary" onClick={() => navigate('/properties')}>
                         Cancelar
                     </button>
-                    <button type="submit" className="btn btn-primary">
+                    <button type="submit" className="btn btn-primary" disabled={loading || uploading}>
                         <Save size={20} />
-                        Guardar Propiedad
+                        {loading ? 'Guardando...' : 'Guardar Propiedad'}
                     </button>
                 </div>
             </form>
