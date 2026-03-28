@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-900 text-slate-100">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- PWA manifest & icons -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch.png" />
+
+    <!-- Tailwind CDN (desarrollo) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <title>Admin Prop</title>
+  </head>
+  <body class="h-full flex items-center justify-center">
+    <div id="root" class="w-full max-w-md p-6">
+      <!-- LOGIN -->
+      <section id="login" class="space-y-4">
+        <h1 class="text-2xl font-bold text-center">Iniciar sesión</h1>
+        <form class="flex flex-col gap-3">
+          <input id="login-email" type="email" placeholder="Email" class="p-2 rounded text-slate-900" required />
+          <input id="login-password" type="password" placeholder="Contraseña" class="p-2 rounded text-slate-900" required />
+          <button type="submit" class="bg-cyan-500 hover:bg-cyan-600 p-2 rounded text-white">Ingresar</button>
+          <!-- Enlaces se inyectan vía app.js -->
+        </form>
+      </section>
+
+      <!-- SIGNUP (se oculta inicialmente) -->
+      <section id="signup" class="space-y-4 hidden">
+        <h1 class="text-2xl font-bold text-center">Crear cuenta</h1>
+        <form class="flex flex-col gap-3">
+          <input id="signup-name" type="text" placeholder="Nombre y Apellido" class="p-2 rounded text-slate-900" required />
+          <input id="signup-phone" type="tel" placeholder="Teléfono" class="p-2 rounded text-slate-900" required />
+          <input id="signup-email" type="email" placeholder="Email" class="p-2 rounded text-slate-900" required />
+          <input id="signup-password" type="password" placeholder="Contraseña" class="p-2 rounded text-slate-900" required />
+
+          <select id="signup-role" class="p-2 rounded text-slate-900" required>
+            <option value="" disabled selected>Selecciona el rol</option>
+            <option value="admin">Admin</option>
+            <option value="colaborador">Colaborador</option>
+            <option value="revisor">Revisor</option>
+            <option value="inquilino">Inquilino</option>
+          </select>
+
+          <button type="submit" class="bg-cyan-500 hover:bg-cyan-600 p-2 rounded text-white">Registrarme</button>
+        </form>
+      </section>
+    </div>
+
+    <!-- App logic -->
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

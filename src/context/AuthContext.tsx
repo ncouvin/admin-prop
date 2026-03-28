@@ -1,12 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User } from '../types';
-import { mockService } from '../services/mockData';
 import { auth, googleProvider } from '../services/firebase';
-import { signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string, password?: string) => Promise<boolean>;
     loginWithGoogle: () => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
@@ -21,16 +19,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             if (firebaseUser) {
-                // Map Firebase user to our app user
-                // In a real app, you'd fetch additional user data from your DB here
                 const appUser: User = {
                     id: firebaseUser.uid,
-                    name: firebaseUser.displayName || 'Usuario',
-                    email: firebaseUser.email || '',
-                    phone: firebaseUser.phoneNumber || '',
-                    cuit: '',
-                    role: 'owner', // Default role
-                    groupId: 'group-' + firebaseUser.uid
+                    name: firebaseUser.displayName || 'Propietario',
+                    email: firebaseUser.email || ''
                 };
                 setUser(appUser);
             } else {
@@ -42,31 +34,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return () => unsubscribe();
     }, []);
 
-    const login = async (email: string, password?: string): Promise<boolean> => {
-        try {
-            if (password) {
-                await signInWithEmailAndPassword(auth, email, password);
-                return true;
-            } else {
-                // Fallback to mock login if no password provided (for legacy support during migration)
-                const mockUser = mockService.login(email);
-                if (mockUser) {
-                    setUser(mockUser);
-                    return true;
-                }
-                return false;
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            return false;
-        }
-    };
-
     const logout = async () => {
         try {
             await signOut(auth);
             setUser(null);
-            localStorage.removeItem('admin_prop_active_user');
         } catch (error) {
             console.error('Logout error:', error);
         }
@@ -82,11 +53,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     if (loading) {
-        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Cargando...</div>;
+        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'sans-serif', color: '#666' }}>Cargando administrador...</div>;
     }
 
     return (
-        <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, loginWithGoogle, logout, isAuthenticated: !!user }}>
             {children}
         </AuthContext.Provider>
     );

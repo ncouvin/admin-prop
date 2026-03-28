@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { mockService } from '../services/mockData';
-import { uploadToCloudinary } from '../services/cloudinary';
-import type { Property, Service } from '../types';
+import { propertyService } from '../services/propertyService';
+import type { Property } from '../types';
 import {
-    Building, MapPin, Ruler, Bed, Bath, Edit, Trash2,
-    ArrowLeft, Zap, Upload, X, Image as ImageIcon, DollarSign, Users
+    Building, MapPin, Edit, Trash2,
+    ArrowLeft, Zap, Image as ImageIcon, Key, HelpCircle
 } from 'lucide-react';
 
 const PropertyDetail: React.FC = () => {
@@ -14,179 +13,112 @@ const PropertyDetail: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [property, setProperty] = useState<Property | null>(null);
-    const [activeTab, setActiveTab] = useState<'details' | 'expenses' | 'incomes' | 'contracts' | 'services' | 'photos'>('details');
-    const [uploading, setUploading] = useState(false);
-
-    // Data states
-    const [services, setServices] = useState<Service[]>([]);
+    const [activeTab, setActiveTab] = useState<'details' | 'services' | 'contracts' | 'photos'>('details');
 
     useEffect(() => {
         if (id && user) {
-            const props = mockService.getProperties();
-            const found = props.find(p => p.id === id);
-            if (found) {
-                setProperty(found);
-                setServices(mockService.getServices(id));
-            } else {
-                navigate('/properties');
-            }
+            const loadProperty = async () => {
+                const fetchedProp = await propertyService.getProperty(id);
+                if (fetchedProp) {
+                    setProperty(fetchedProp);
+                } else {
+                    navigate('/dashboard');
+                }
+            };
+            loadProperty();
         }
     }, [id, user, navigate]);
 
-    const handleDelete = () => {
-        if (window.confirm('¿Está seguro que desea eliminar esta propiedad?')) {
+    const handleDelete = async () => {
+        if (window.confirm('¿Está seguro que desea eliminar esta propiedad y todos sus datos relacionados?')) {
             if (id) {
-                mockService.deleteProperty(id);
-                navigate('/properties');
+                await propertyService.deleteProperty(id);
+                navigate('/dashboard');
             }
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0 || !property) return;
-
-        setUploading(true);
-        try {
-            const file = e.target.files[0];
-            const url = await uploadToCloudinary(file);
-
-            const updatedProperty = {
-                ...property,
-                images: [...(property.images || []), url]
-            };
-
-            setProperty(updatedProperty);
-            mockService.updateProperty(updatedProperty);
-        } catch (error) {
-            console.error("Error uploading image: ", error);
-            alert("Error al subir la imagen. Por favor intente nuevamente.");
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const handleRemoveImage = (index: number) => {
-        if (!property) return;
-
-        if (window.confirm('¿Eliminar esta imagen?')) {
-            const updatedProperty = {
-                ...property,
-                images: property.images.filter((_, i) => i !== index)
-            };
-            setProperty(updatedProperty);
-            mockService.updateProperty(updatedProperty);
-        }
-    };
-
-    if (!property) return null;
+    if (!property) return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando detalles...</div>;
 
     return (
         <div className="container fade-in">
-            {/* Header */}
             <div className="header-actions">
-                <button className="btn btn-secondary" onClick={() => navigate('/properties')}>
+                <button className="btn btn-secondary" onClick={() => navigate('/dashboard')}>
                     <ArrowLeft size={20} />
                     Volver
                 </button>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button className="btn btn-secondary" onClick={() => navigate(`/properties/${id}/edit`)}>
                         <Edit size={20} />
-                        Editar
+                        Editar Propiedad
                     </button>
-                    <button className="btn btn-danger" onClick={handleDelete}>
+                    <button className="btn btn-danger" onClick={handleDelete} style={{ color: 'red' }}>
                         <Trash2 size={20} />
-                        Eliminar
+                        Eliminar Propiedad
                     </button>
                 </div>
             </div>
 
-            {/* Property Title Card */}
-            <div className="card mb-4" style={{ marginBottom: '2rem' }}>
+            <div className="card" style={{ marginBottom: '2rem', backgroundColor: '#fff', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>{property.name}</h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
+                        <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#1a73e8' }}>{property.name}</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#5f6368', fontSize: '1.1rem' }}>
                             <MapPin size={18} />
-                            <span>{property.address.street}, {property.address.city}</span>
+                            <span>{property.address}</span>
                         </div>
                     </div>
-                    <div className="badge badge-primary">
-                        {property.type.toUpperCase()}
+                    <div style={{ padding: '0.5rem 1rem', backgroundColor: property.isRented ? '#e6f4ea' : '#fce8e6', color: property.isRented ? '#188038' : '#d93025', borderRadius: '24px', fontWeight: 600, fontSize: '0.9rem' }}>
+                        {property.isRented ? 'ACTIVA PARA ALQUILER' : 'SOLO ADMINISTRACIÓN'}
                     </div>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="tabs">
+            <div className="tabs" style={{ display: 'flex', gap: '1rem', borderBottom: '2px solid #f1f3f4', marginBottom: '2rem' }}>
                 <button
-                    className={`tab ${activeTab === 'details' ? 'active' : ''}`}
+                    style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'details' ? '2px solid #1a73e8' : 'none', color: activeTab === 'details' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'details' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     onClick={() => setActiveTab('details')}
                 >
-                    <Building size={18} /> Detalles
+                    <Building size={18} /> Datos Generales
                 </button>
                 <button
-                    className={`tab ${activeTab === 'photos' ? 'active' : ''}`}
+                    style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'services' ? '2px solid #1a73e8' : 'none', color: activeTab === 'services' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'services' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => setActiveTab('services')}
+                >
+                    <Zap size={18} /> Impuestos & Expensas
+                </button>
+                {property.isRented && (
+                    <button
+                        style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'contracts' ? '2px solid #1a73e8' : 'none', color: activeTab === 'contracts' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'contracts' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        onClick={() => setActiveTab('contracts')}
+                    >
+                        <Key size={18} /> Contrato de Alquiler
+                    </button>
+                )}
+                <button
+                    style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'photos' ? '2px solid #1a73e8' : 'none', color: activeTab === 'photos' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'photos' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     onClick={() => setActiveTab('photos')}
                 >
                     <ImageIcon size={18} /> Fotos
                 </button>
-                <button
-                    className={`tab ${activeTab === 'contracts' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('contracts')}
-                >
-                    <Users size={18} /> Inquilinos
-                </button>
-                <button
-                    className={`tab ${activeTab === 'expenses' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('expenses')}
-                >
-                    <DollarSign size={18} /> Gastos
-                </button>
-                <button
-                    className={`tab ${activeTab === 'services' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('services')}
-                >
-                    <Zap size={18} /> Servicios
-                </button>
             </div>
 
-            {/* Content */}
             <div className="tab-content">
                 {activeTab === 'details' && (
-                    <div className="grid-2">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 2fr) minmax(250px, 1fr)', gap: '2rem' }}>
                         <div className="card">
-                            <h3 style={{ marginBottom: '1.5rem' }}>Características</h3>
-                            <div className="list-group">
-                                <div className="list-item">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                                        <Ruler size={18} />
-                                        <span>Superficie Total</span>
-                                    </div>
-                                    <strong style={{ fontSize: '1.1rem' }}>{property.features.coveredArea + property.features.uncoveredArea} m²</strong>
-                                </div>
-                                <div className="list-item">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                                        <Bed size={18} />
-                                        <span>Ambientes</span>
-                                    </div>
-                                    <strong style={{ fontSize: '1.1rem' }}>{property.features.rooms}</strong>
-                                </div>
-                                <div className="list-item">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                                        <Bath size={18} />
-                                        <span>Baños</span>
-                                    </div>
-                                    <strong style={{ fontSize: '1.1rem' }}>{property.features.bathrooms}</strong>
-                                </div>
-                            </div>
+                            <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Características</h3>
+                            <p style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: '#3c4043' }}>
+                                {property.features || 'No hay características descriptivas detalladas.'}
+                            </p>
                         </div>
                         <div className="card">
-                            <h3 style={{ marginBottom: '1.5rem' }}>Valoración</h3>
-                            <div className="stat-card">
-                                <div className="stat-value">
-                                    {property.currency} {property.purchaseValue?.toLocaleString() || '-'}
+                            <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Finanzas Básicas</h3>
+                            <div style={{ backgroundColor: '#f8f9fa', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dadce0' }}>
+                                <div style={{ fontSize: '0.9rem', color: '#5f6368', marginBottom: '0.25rem' }}>Valor de Mercado Estimado</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1a73e8' }}>
+                                    {property.currency} {property.estimatedValue?.toLocaleString() || '0'}
                                 </div>
-                                <div className="stat-label">Valor de Compra</div>
                             </div>
                         </div>
                     </div>
@@ -194,121 +126,36 @@ const PropertyDetail: React.FC = () => {
 
                 {activeTab === 'photos' && (
                     <div className="card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3>Galería de Fotos</h3>
-                            <label className={`btn btn-primary ${uploading ? 'disabled' : ''}`} style={{ cursor: 'pointer' }}>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    disabled={uploading}
-                                    hidden
-                                />
-                                {uploading ? 'Subiendo...' : (
-                                    <>
-                                        <Upload size={18} /> Subir Foto
-                                    </>
-                                )}
-                            </label>
-                        </div>
-
+                        <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Galería</h3>
                         {property.images && property.images.length > 0 ? (
-                            <div className="image-grid">
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
                                 {property.images.map((url, index) => (
-                                    <div key={index} className="image-preview">
-                                        <img src={url} alt={`Propiedad ${index + 1}`} />
-                                        <button
-                                            className="delete-btn"
-                                            onClick={() => handleRemoveImage(index)}
-                                        >
-                                            <X size={16} />
-                                        </button>
+                                    <div key={index} style={{ height: '200px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #dadce0' }}>
+                                        <img src={url} alt={`Property ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '4rem',
-                                border: '2px dashed var(--color-border)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'var(--color-text-secondary)'
-                            }}>
-                                <ImageIcon size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                                <p>No hay fotos cargadas en esta propiedad.</p>
+                            <div style={{ textAlign: 'center', padding: '4rem', color: '#9aa0a6' }}>
+                                No hay fotos adjuntas a esta propiedad.
                             </div>
                         )}
                     </div>
                 )}
 
                 {activeTab === 'services' && (
-                    <div className="card">
-                        <h3 style={{ marginBottom: '1.5rem' }}>Servicios e Impuestos</h3>
-                        {services.length > 0 ? (
-                            <div className="list-group">
-                                {services.map(service => (
-                                    <div key={service.id} className="list-item">
-                                        <div>
-                                            <strong style={{ fontSize: '1.1rem' }}>{service.name}</strong>
-                                            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '0.25rem' }}>
-                                                Ref: {service.providerId || '-'}
-                                            </div>
-                                        </div>
-                                        <div className="badge badge-secondary">
-                                            {service.periodicity === 'monthly' ? 'Mensual' :
-                                                service.periodicity === 'bimonthly' ? 'Bimestral' :
-                                                    service.periodicity === 'annual' ? 'Anual' : service.periodicity}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p style={{ color: 'var(--color-text-secondary)', textAlign: 'center', padding: '2rem' }}>
-                                No hay servicios registrados
-                            </p>
-                        )}
+                    <div className="card" style={{ textAlign: 'center', padding: '4rem', color: '#9aa0a6' }}>
+                         <HelpCircle size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                         <p style={{ fontSize: '1.2rem', color: '#5f6368' }}>Módulo de Impuestos en Construcción (Fase 4)</p>
+                         <p style={{ marginTop: '0.5rem' }}>Aquí podrás añadir Luz, Expensas, Aguas, y subir los comprobantes de pago de cada mes.</p>
                     </div>
                 )}
 
-                {/* Placeholders for other tabs */}
                 {activeTab === 'contracts' && (
-                    <div className="card">
-                        <h3 style={{ marginBottom: '1.5rem' }}>Contratos de Alquiler</h3>
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '4rem',
-                            border: '2px dashed var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            color: 'var(--color-text-secondary)'
-                        }}>
-                            <Users size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                            <p>Funcionalidad en desarrollo</p>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'expenses' && (
-                    <div className="card">
-                        <h3 style={{ marginBottom: '1.5rem' }}>Historial de Gastos</h3>
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '4rem',
-                            border: '2px dashed var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            color: 'var(--color-text-secondary)'
-                        }}>
-                            <DollarSign size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                            <p>Funcionalidad en desarrollo</p>
-                        </div>
+                    <div className="card" style={{ textAlign: 'center', padding: '4rem', color: '#9aa0a6' }}>
+                         <HelpCircle size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                         <p style={{ fontSize: '1.2rem', color: '#5f6368' }}>Módulo de Alquiler en Construcción (Fase 4)</p>
+                         <p style={{ marginTop: '0.5rem' }}>Aquí configurarás las fechas del contrato, el monto de alquiler y su índice de actualización.</p>
                     </div>
                 )}
             </div>

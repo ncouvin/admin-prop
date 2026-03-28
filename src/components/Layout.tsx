@@ -9,9 +9,9 @@ import {
     Wallet,
     MessageSquare,
     Settings,
-    Users,
     LogOut
 } from 'lucide-react';
+import { APP_VERSION } from '../version';
 
 const Layout: React.FC = () => {
     const { user, logout } = useAuth();
@@ -54,15 +54,6 @@ const Layout: React.FC = () => {
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
                     <h1 style={{ fontSize: '1.25rem', color: 'var(--color-primary)' }}>Admin Prop</h1>
                     <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{user?.name}</p>
-                    <span style={{
-                        fontSize: '0.75rem',
-                        backgroundColor: 'var(--color-surface-hover)',
-                        padding: '0.125rem 0.5rem',
-                        borderRadius: '1rem',
-                        textTransform: 'capitalize'
-                    }}>
-                        {user?.role}
-                    </span>
                 </div>
 
                 <nav style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
@@ -102,16 +93,9 @@ const Layout: React.FC = () => {
                         <Settings size={20} />
                         Configuración
                     </Link>
-
-                    {user?.role === 'owner' && (
-                        <Link to="/users" style={navItemStyle('/users')}>
-                            <Users size={20} />
-                            Admin Usuarios
-                        </Link>
-                    )}
                 </nav>
 
-                <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)' }}>
+                <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <button
                         onClick={handleLogout}
                         style={{
@@ -124,6 +108,9 @@ const Layout: React.FC = () => {
                         <LogOut size={20} />
                         Cerrar Sesión
                     </button>
+                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#9aa0a6', marginTop: '0.5rem' }}>
+                        Admin Prop {APP_VERSION}
+                    </div>
                 </div>
             </aside>
 

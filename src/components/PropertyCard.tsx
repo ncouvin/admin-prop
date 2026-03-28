@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Property } from '../types';
-import { MapPin, Home, User as UserIcon } from 'lucide-react';
+import { MapPin, Home, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface PropertyCardProps {
@@ -13,38 +13,44 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
     return (
         <div
             className="card"
-            style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+            style={{ cursor: 'pointer', transition: 'transform 0.2s', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '1rem', backgroundColor: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
             onClick={() => navigate(`/properties/${property.id}`)}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
             <div style={{
                 height: '160px',
-                backgroundColor: 'var(--color-surface-hover)',
-                borderRadius: 'var(--radius-md)',
+                backgroundColor: '#f1f3f4',
+                borderRadius: '8px',
                 marginBottom: '1rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden'
             }}>
-                {property.images.length > 0 ? (
+                {property.images && property.images.length > 0 ? (
                     <img src={property.images[0]} alt={property.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                    <Home size={48} color="var(--color-text-secondary)" />
+                    <Home size={48} color="#bdc1c6" />
                 )}
             </div>
 
-            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>{property.name}</h3>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#202124', fontWeight: 600 }}>{property.name}</h3>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#5f6368', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
                 <MapPin size={16} />
-                <span>{property.address.street}, {property.address.city}</span>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{property.address}</span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
-                <UserIcon size={16} />
-                <span>{property.tenantId ? 'Alquilado' : 'Disponible'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', borderTop: '1px solid #f1f3f4', paddingTop: '1rem' }}>
+                <span style={{ fontSize: '0.9rem', color: property.isRented ? '#188038' : '#EA4335', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <Key size={16} />
+                    {property.isRented ? 'Opciones Habilitadas' : 'Solo Administración'}
+                </span>
+                
+                <span style={{ fontSize: '1rem', fontWeight: 600, color: '#202124' }}>
+                    {property.currency} {property.estimatedValue?.toLocaleString()}
+                </span>
             </div>
         </div>
     );

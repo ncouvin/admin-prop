@@ -1,100 +1,53 @@
-export type UserRole = 'owner' | 'collaborator' | 'viewer' | 'tenant';
-
 export interface User {
-    id: string;
+    id: string; // Firebase Auth UID
     name: string;
     email: string;
-    phone: string;
-    cuit: string;
-    role: UserRole;
-    groupId?: string; // ID del grupo al que pertenece
 }
+
+export type PropertyType = 'apartment' | 'house' | 'garage' | 'store' | 'warehouse' | 'land' | 'ph' | 'other';
 
 export interface Property {
-    id: string;
-    name: string; // Nombre identificativo (ej: "Depto Mar del Plata")
-    address: Address;
+    id: string; // Generado automáticamente (UUID o Firebase Doc ID)
+    ownerId: string; // Ref a User.id
+    name: string; // Ej: "Depto Mar del Plata"
+    address: string; // Dirección completa
     type: PropertyType;
-    purchaseValue?: number;
-    currency: 'USD' | 'ARS' | 'EUR';
-    features: PropertyFeatures;
-    ownerId: string;
-    tenantId?: string; // Inquilino actual
-    images: string[]; // URLs
-    documents: Document[];
-}
-
-export interface Address {
-    street: string;
-    city: string; // Provincia/Ciudad
-    country: string;
-    floor?: string;
-    apartment?: string;
-}
-
-export type PropertyType = 'apartment' | 'house' | 'garage' | 'store' | 'warehouse' | 'land' | 'other';
-
-export interface PropertyFeatures {
-    rooms: number;
-    bathrooms: number;
-    coveredArea: number;
-    uncoveredArea: number;
-    amenities: string[];
-}
-
-export interface Document {
-    id: string;
-    name: string;
-    url: string;
-    type: 'deed' | 'regulation' | 'contract' | 'other';
-}
-
-export interface Service {
-    id: string;
-    propertyId: string;
-    name: string; // ABL, Expensas, Luz
-    type: ServiceType;
-    providerId?: string; // Nro partida/medidor
-    periodicity: PaymentPeriodicity;
-}
-
-export type ServiceType = 'electricity' | 'gas' | 'water' | 'internet' | 'cable' | 'taxes' | 'expenses' | 'other';
-
-export type PaymentPeriodicity = 'daily' | 'weekly' | 'monthly' | 'bimonthly' | 'quarterly' | 'four_monthly' | 'semiannual' | 'annual' | 'one_time';
-
-export interface Expense {
-    id: string;
-    propertyId: string;
-    date: string;
-    category: 'maintenance' | 'repair' | 'service' | 'tax' | 'other';
-    amount: number;
+    estimatedValue: number; // Valor tentativo de compra
     currency: 'USD' | 'ARS';
-    description: string;
-    receiptUrl?: string;
-    isPaid: boolean;
+    features: string; // Ej: "3 ambientes, al frente, balcón, cochera"
+    images?: string[]; // Array de URLs de Cloudinary
+    isRented: boolean; // Si este toggle está prendido, habilita los campos de abajo
 }
 
-export interface Income {
-    id: string;
+// Sub-colección o parte de la Propiedad cuando isRented = true
+export interface RentalContract {
     propertyId: string;
-    tenantId: string;
-    date: string;
-    amount: number;
+    rentAmount: number;
     currency: 'USD' | 'ARS';
-    period: string; // Ej: "Enero 2024"
-    receiptUrl?: string;
-    status: 'confirmed' | 'pending';
+    startDate: string; // YYYY-MM-DD
+    endDate: string; // YYYY-MM-DD
+    updateFrequencyMonths: number; // Ej: cada 3, 6, 12 meses
+    updateIndex: string; // Ej: "ICL", "IPC", "Fijo"
 }
 
-export interface TenantContract {
+// Qué servicios tiene enganchados esta propiedad.
+export interface PropertyService {
     id: string;
     propertyId: string;
-    tenantId: string;
-    startDate: string;
-    endDate: string;
-    updateFrequencyMonths: number;
-    nextUpdateDate: string;
-    amount: number;
-    currency: 'USD' | 'ARS';
-    isActive: boolean;
+    name: string; // Ej: "Expensas", "Electricidad", "Gas", "Agua", "ABL"
+    providerName?: string; // Ej: "Edenor", "Metrogas"
+    accountNumber?: string; // Número de medidor o cliente
+}
+
+// Cuánto se pagó, cuándo y el comprobante, por cada PropertyService, por cada mes.
+export interface ServicePayment {
+    id: string;
+    serviceId: string; // Ref a PropertyService.id
+    propertyId: string;
+    year: number; // Ej: 2024
+    month: number; // Ej: 1 para Enero
+    status: 'paid' | 'pending';
+    amount?: number;
+    paymentDate?: string; // Cuando se pagó
+    receiptUrl?: string; // Foto/PDF del comprobante en Firebase Storage
 }

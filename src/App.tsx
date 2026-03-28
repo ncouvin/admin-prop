@@ -7,9 +7,6 @@ import Dashboard from './pages/Dashboard';
 import Properties from './pages/Properties';
 import PropertyForm from './pages/PropertyForm';
 import PropertyDetail from './pages/PropertyDetail';
-import TenantForm from './pages/TenantForm';
-import ExpenseForm from './pages/ExpenseForm';
-import IncomeForm from './pages/IncomeForm';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -36,9 +33,6 @@ const AppRoutes: React.FC = () => {
         <Route path="properties/new" element={<PropertyForm />} />
         <Route path="properties/:id/edit" element={<PropertyForm />} />
         <Route path="properties/:id" element={<PropertyDetail />} />
-        <Route path="properties/:id/tenants/new" element={<TenantForm />} />
-        <Route path="properties/:id/expenses/new" element={<ExpenseForm />} />
-        <Route path="properties/:id/incomes/new" element={<IncomeForm />} />
         <Route path="alerts" element={<div>Alertas (WIP)</div>} />
         <Route path="calendar" element={<div>Calendario (WIP)</div>} />
         <Route path="finances" element={<div>Finanzas (WIP)</div>} />
