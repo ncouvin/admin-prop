@@ -5,8 +5,10 @@ import { propertyService } from '../services/propertyService';
 import type { Property } from '../types';
 import {
     Building, MapPin, Edit, Trash2,
-    ArrowLeft, Zap, Image as ImageIcon, Key, HelpCircle
+    ArrowLeft, Zap, Image as ImageIcon, Key
 } from 'lucide-react';
+import ServicesList from '../components/ServicesList';
+import RentalContractForm from '../components/RentalContractForm';
 
 const PropertyDetail: React.FC = () => {
     const { id } = useParams();
@@ -144,19 +146,11 @@ const PropertyDetail: React.FC = () => {
                 )}
 
                 {activeTab === 'services' && (
-                    <div className="card" style={{ textAlign: 'center', padding: '4rem', color: '#9aa0a6' }}>
-                         <HelpCircle size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                         <p style={{ fontSize: '1.2rem', color: '#5f6368' }}>Módulo de Impuestos en Construcción (Fase 4)</p>
-                         <p style={{ marginTop: '0.5rem' }}>Aquí podrás añadir Luz, Expensas, Aguas, y subir los comprobantes de pago de cada mes.</p>
-                    </div>
+                    <ServicesList propertyId={property.id} />
                 )}
 
                 {activeTab === 'contracts' && (
-                    <div className="card" style={{ textAlign: 'center', padding: '4rem', color: '#9aa0a6' }}>
-                         <HelpCircle size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
-                         <p style={{ fontSize: '1.2rem', color: '#5f6368' }}>Módulo de Alquiler en Construcción (Fase 4)</p>
-                         <p style={{ marginTop: '0.5rem' }}>Aquí configurarás las fechas del contrato, el monto de alquiler y su índice de actualización.</p>
-                    </div>
+                    <RentalContractForm propertyId={property.id} />
                 )}
             </div>
         </div>

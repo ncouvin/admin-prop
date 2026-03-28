@@ -21,6 +21,7 @@ export interface Property {
 
 // Sub-colección o parte de la Propiedad cuando isRented = true
 export interface RentalContract {
+    id?: string;
     propertyId: string;
     rentAmount: number;
     currency: 'USD' | 'ARS';
