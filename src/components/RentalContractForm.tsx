@@ -11,6 +11,7 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
     const [contract, setContract] = useState<RentalContract | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [accumulatedIndex, setAccumulatedIndex] = useState<number>(0);
 
     const [formData, setFormData] = useState<Partial<RentalContract>>({
         currency: 'USD',
@@ -70,6 +71,47 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
 
     if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando contrato...</div>;
 
+    const calculateRentStatus = () => {
+        if (!contract) return null;
+        
+        const start = new Date(contract.startDate);
+        const today = new Date();
+        
+        let monthsPassed = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+        if (today.getDate() < start.getDate()) {
+            monthsPassed--;
+        }
+        
+        if (monthsPassed < 0) monthsPassed = 0;
+
+        const periodsPassed = Math.floor(monthsPassed / contract.updateFrequencyMonths);
+        
+        const nextUpdateDate = new Date(start);
+        nextUpdateDate.setMonth(start.getMonth() + (periodsPassed + 1) * contract.updateFrequencyMonths);
+
+        let currentAmount = contract.rentAmount;
+        let estimatedNextValue = contract.rentAmount;
+
+        const isFixed = contract.updateIndex === 'FIJO';
+
+        if (!isFixed) {
+            // Valor actual estimado si ya pasaron periodos y el usuario ingresó un índice
+            currentAmount = contract.rentAmount * (1 + (accumulatedIndex / 100));
+            // Al ser una proyección básica en MVP, proyectamos el mismo valor calculado para el próximo.
+            estimatedNextValue = currentAmount; 
+        }
+
+        return {
+            nextUpdateDate,
+            periodsPassed,
+            currentAmount,
+            estimatedNextValue,
+            isFixed
+        };
+    };
+
+    const statusObj = calculateRentStatus();
+
     return (
         <div className="card">
             <h3 style={{ marginBottom: '1.5rem', color: '#1a73e8', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -77,9 +119,45 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
                 {contract ? 'Contrato Vigente' : 'Configurar Nuevo Contrato'}
             </h3>
 
-            {contract && (
-                <div style={{ backgroundColor: '#e6f4ea', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', color: '#188038', fontWeight: 500 }}>
-                    Contrato Activo: Inició {new Date(contract.startDate).toLocaleDateString()}, finaliza el {new Date(contract.endDate).toLocaleDateString()}
+            {contract && statusObj && (
+                <div style={{ backgroundColor: '#e6f4ea', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #ceead6' }}>
+                    <div style={{ color: '#188038', fontWeight: 600, fontSize: '1.1rem', marginBottom: '1rem' }}>
+                        Contrato Activo: {new Date(contract.startDate).toLocaleDateString()} al {new Date(contract.endDate).toLocaleDateString()}
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', backgroundColor: '#fff', padding: '1rem', borderRadius: '8px' }}>
+                        <div>
+                            <div style={{ fontSize: '0.85rem', color: '#5f6368' }}>Próxima Actualización</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#3c4043' }}>
+                                {statusObj.nextUpdateDate.toLocaleDateString()}
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.85rem', color: '#5f6368' }}>
+                                Valor Actualizado ({contract.currency})
+                            </div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1a73e8' }}>
+                                {contract.currency} {statusObj.currentAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            </div>
+                        </div>
+                    </div>
+
+                    {!statusObj.isFixed && (
+                        <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <label style={{ fontSize: '0.9rem', color: '#3c4043', fontWeight: 500 }}>
+                                Simular ajuste estimado ({contract.updateIndex}):
+                            </label>
+                            <input 
+                                type="number" 
+                                className="input" 
+                                style={{ width: '80px', padding: '0.25rem 0.5rem', height: 'auto' }}
+                                value={accumulatedIndex}
+                                onChange={e => setAccumulatedIndex(parseFloat(e.target.value) || 0)}
+                                placeholder="Ej: 15"
+                            />
+                            <span style={{ color: '#5f6368', fontSize: '0.9rem' }}>% acumulado</span>
+                        </div>
+                    )}
                 </div>
             )}
 
