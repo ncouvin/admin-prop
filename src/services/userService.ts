@@ -25,7 +25,7 @@ export const userService = {
                 id: firebaseUser.uid,
                 email: firebaseUser.email || '',
                 name: firebaseUser.displayName || 'Propietario',
-                maxProperties: firebaseUser.email === 'ncouvin@gmail.com' ? 9999 : 1, // Súper Admin tiene límite infinito
+                maxProperties: firebaseUser.email === 'ncouvin@gmail.com' ? 9999 : 2, // Súper Admin tiene límite infinito
                 purchasedSlots: 0,
                 createdAt: new Date().toISOString()
             };

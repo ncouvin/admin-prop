@@ -60,7 +60,7 @@ export default async function handler(req, res) {
                         const userDoc = await transaction.get(userRef);
                         if (!userDoc.exists) return; // Muerte silenciosa para evitar bloqueos
                         
-                        const currentSlots = userDoc.data().maxProperties || 1;
+                        const currentSlots = userDoc.data().maxProperties || 2;
                         const purchased = userDoc.data().purchasedSlots || 0;
                         
                         transaction.update(userRef, { 
