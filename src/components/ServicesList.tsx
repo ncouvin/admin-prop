@@ -170,9 +170,9 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
             await propertyService.saveServicePayment(propertyId, serviceId, paymentData);
             await loadData(); // Full reload to get DB states
             
-        } catch (error) {
+        } catch (error: any) {
             console.error("Upload fail", error);
-            alert("Fallo al subir comprobante.");
+            alert(`Fallo al subir comprobante: ${error.message || "Desconocido"}`);
         } finally {
             setUploading(null);
         }
