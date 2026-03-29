@@ -71,7 +71,7 @@ const TenantProperties: React.FC = () => {
             ) : (
                 <div className="grid">
                     {properties.map(property => (
-                        <PropertyCard key={property.id} property={property} /> 
+                        <PropertyCard key={property.id} property={property} hasActiveContract={true} /> 
                     ))}
                 </div>
             )}

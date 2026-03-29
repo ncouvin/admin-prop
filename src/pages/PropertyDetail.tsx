@@ -15,6 +15,7 @@ const PropertyDetail: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [property, setProperty] = useState<Property | null>(null);
+    const [hasActiveContract, setHasActiveContract] = useState(false);
     const [activeTab, setActiveTab] = useState<'details' | 'services' | 'contracts' | 'photos'>('details');
 
     useEffect(() => {
@@ -23,6 +24,10 @@ const PropertyDetail: React.FC = () => {
                 const fetchedProp = await propertyService.getProperty(id);
                 if (fetchedProp) {
                     setProperty(fetchedProp);
+                    if (fetchedProp.isRented) {
+                        const contract = await propertyService.getActiveRentalContract(fetchedProp.id);
+                        setHasActiveContract(!!contract);
+                    }
                 } else {
                     navigate('/dashboard');
                 }
@@ -74,8 +79,20 @@ const PropertyDetail: React.FC = () => {
                             <span>{property.address}</span>
                         </div>
                     </div>
-                    <div style={{ padding: '0.5rem 1rem', backgroundColor: property.isRented ? '#e6f4ea' : '#fce8e6', color: property.isRented ? '#188038' : '#d93025', borderRadius: '24px', fontWeight: 600, fontSize: '0.9rem' }}>
-                        {property.isRented ? 'ACTIVA PARA ALQUILER' : 'SOLO ADMINISTRACIÓN'}
+                    <div style={{ 
+                        padding: '0.4rem 1rem', 
+                        backgroundColor: !property.isRented ? '#f8f9fa' : (hasActiveContract ? '#e6f4ea' : '#fce8e6'), 
+                        color: !property.isRented ? '#5f6368' : (hasActiveContract ? '#188038' : '#d93025'), 
+                        borderRadius: '24px', 
+                        fontWeight: 600, 
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)'
+                    }}>
+                        <Key size={14} />
+                        {!property.isRented ? 'USO PERSONAL / INACTIVA' : (hasActiveContract ? 'ALQUILADA / ACTIVA' : 'DISPONIBLE PARA ALQUILAR')}
                     </div>
                 </div>
             </div>

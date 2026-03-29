@@ -6,8 +6,12 @@ import PropertyCard from '../components/PropertyCard';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+interface ExtendedProperty extends Property {
+    hasActiveContract?: boolean;
+}
+
 const Properties: React.FC = () => {
-    const [properties, setProperties] = useState<Property[]>([]);
+    const [properties, setProperties] = useState<ExtendedProperty[]>([]);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -17,7 +21,16 @@ const Properties: React.FC = () => {
             if (user) {
                 try {
                     const data = await propertyService.getPropertiesByOwner(user.id);
-                    setProperties(data);
+                    
+                    const enriched = await Promise.all(data.map(async (p) => {
+                        let hasContract = false;
+                        if (p.isRented) {
+                            const c = await propertyService.getActiveRentalContract(p.id);
+                            hasContract = !!c;
+                        }
+                        return { ...p, hasActiveContract: hasContract };
+                    }));
+                    setProperties(enriched);
                 } catch (error) {
                     console.error("Error al cargar propiedades de Firebase:", error);
                 } finally {
@@ -55,7 +68,7 @@ const Properties: React.FC = () => {
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                     {properties.map(prop => (
-                        <PropertyCard key={prop.id} property={prop} />
+                        <PropertyCard key={prop.id} property={prop} hasActiveContract={prop.hasActiveContract} />
                     ))}
                 </div>
             )}

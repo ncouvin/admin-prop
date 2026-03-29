@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface PropertyCardProps {
     property: Property;
+    hasActiveContract?: boolean;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, hasActiveContract }) => {
     const navigate = useNavigate();
 
     return (
@@ -43,9 +44,19 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', borderTop: '1px solid #f1f3f4', paddingTop: '1rem' }}>
-                <span style={{ fontSize: '0.9rem', color: property.isRented ? '#188038' : '#EA4335', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <Key size={16} />
-                    {property.isRented ? 'Opciones Habilitadas' : 'Solo Administración'}
+                <span style={{ 
+                    fontSize: '0.85rem', 
+                    color: !property.isRented ? '#5f6368' : (hasActiveContract ? '#188038' : '#d93025'), 
+                    backgroundColor: !property.isRented ? '#f8f9fa' : (hasActiveContract ? '#e6f4ea' : '#fce8e6'),
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '16px',
+                    fontWeight: 600, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.25rem' 
+                }}>
+                    <Key size={14} />
+                    {!property.isRented ? 'USO PERSONAL' : (hasActiveContract ? 'ALQUILADA' : 'DISPONIBLE PARA ALQUILAR')}
                 </span>
                 
                 <span style={{ fontSize: '1rem', fontWeight: 600, color: '#202124' }}>
