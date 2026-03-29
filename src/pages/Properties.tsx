@@ -79,6 +79,19 @@ const Properties: React.FC = () => {
 
                         return { ...p, hasActiveContract: hasContract, currentRentAmount, rentCurrency, hasUnpaidServices };
                     }));
+
+                    enriched.sort((a, b) => {
+                        const getWeight = (p: ExtendedProperty) => {
+                            if (p.isRented && !p.hasActiveContract) return 1; // Disponible para alquilar
+                            if (p.isRented && p.hasActiveContract) return 2; // Alquilada
+                            return 3; // Uso Personal
+                        };
+                        const weightA = getWeight(a);
+                        const weightB = getWeight(b);
+                        if (weightA !== weightB) return weightA - weightB;
+                        return a.name.localeCompare(b.name);
+                    });
+
                     setProperties(enriched);
                 } catch (error) {
                     console.error("Error al cargar propiedades de Firebase:", error);

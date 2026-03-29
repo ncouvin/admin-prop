@@ -5,7 +5,7 @@ import { propertyService } from '../services/propertyService';
 import type { Property } from '../types';
 import {
     Building, MapPin, Edit, Trash2,
-    ArrowLeft, Zap, Image as ImageIcon, Key, Wrench
+    ArrowLeft, Zap, Image as ImageIcon, Key, Wrench, Home
 } from 'lucide-react';
 import ServicesList from '../components/ServicesList';
 import RentalContractForm from '../components/RentalContractForm';
@@ -73,11 +73,20 @@ const PropertyDetail: React.FC = () => {
 
             <div className="card" style={{ marginBottom: '2rem', backgroundColor: '#fff', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                        <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#1a73e8' }}>{property.name}</h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#5f6368', fontSize: '1.1rem' }}>
-                            <MapPin size={18} />
-                            <span>{property.address}</span>
+                    <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        {property.images?.[0] ? (
+                            <img src={property.images[0]} alt={property.name} style={{ width: '80px', height: '80px', borderRadius: '12px', objectFit: 'cover', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }} />
+                        ) : (
+                            <div style={{ width: '80px', height: '80px', borderRadius: '12px', backgroundColor: '#f1f3f4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Home size={32} color="#bdc1c6" />
+                            </div>
+                        )}
+                        <div>
+                            <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#1a73e8' }}>{property.name}</h1>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#5f6368', fontSize: '1.1rem' }}>
+                                <MapPin size={18} />
+                                <span>{property.address}</span>
+                            </div>
                         </div>
                     </div>
                     <div style={{ 

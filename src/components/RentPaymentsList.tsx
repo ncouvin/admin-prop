@@ -49,7 +49,6 @@ const RentPaymentsList: React.FC<Props> = ({ propertyId, contractId, isTenantVie
 
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!isTenantView) return; // Solo el inquilino puede subir pagos de alquiler (según la fase actual)
         if (!amount || month < 1 || month > 12 || year < 2000) return;
 
         setUploading(true);
@@ -66,7 +65,7 @@ const RentPaymentsList: React.FC<Props> = ({ propertyId, contractId, isTenantVie
                 currency,
                 receiptUrl,
                 paymentDate: new Date().toISOString(),
-                isVerified: false,
+                isVerified: !isTenantView, // Auto-verified if owner uploads it
                 tenantId: user?.id
             });
 
@@ -110,10 +109,10 @@ const RentPaymentsList: React.FC<Props> = ({ propertyId, contractId, isTenantVie
                 <CheckCircle size={20} /> Registro de Pagos Reales
             </h3>
 
-            {isTenantView && (
-                <form onSubmit={handleUpload} className="card" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dadce0', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '2rem' }}>
+            {(isTenantView || !isTenantView) && (
+                <form onSubmit={handleUpload} className="card fade-in" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dadce0', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '2rem' }}>
                     <div style={{ width: '100%', marginBottom: '0.5rem', color: '#5f6368', fontSize: '0.9rem', fontWeight: 500 }}>
-                        Informar Nuevo Pago de Alquiler
+                        {isTenantView ? "Informar Nuevo Pago de Alquiler" : "Registrar Pago de Inquilino Directamente (Auto-Verificado)"}
                     </div>
                     <div>
                         <label className="label">Periodo</label>
@@ -127,7 +126,7 @@ const RentPaymentsList: React.FC<Props> = ({ propertyId, contractId, isTenantVie
                         </div>
                     </div>
                     <div>
-                        <label className="label">Importe Transferido</label>
+                        <label className="label">Importe Transf.</label>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <select className="input" style={{ width: '70px', padding: '0.4rem' }} value={currency} onChange={e => setCurrency(e.target.value as 'ARS' | 'USD')}>
                                 <option value="ARS">ARS</option>
@@ -138,11 +137,11 @@ const RentPaymentsList: React.FC<Props> = ({ propertyId, contractId, isTenantVie
                     </div>
                     <div style={{ flex: 1, minWidth: '150px' }}>
                         <label className="label">Comprobante</label>
-                        <input type="file" className="input" style={{ padding: '0.3rem' }} accept="image/*,.pdf" onChange={e => setReceiptFile(e.target.files?.[0] || null)} required />
+                        <input type="file" className="input" style={{ padding: '0.3rem' }} accept="image/*,.pdf" onChange={e => setReceiptFile(e.target.files?.[0] || null)} required={isTenantView} />
                     </div>
                     <div>
-                        <button type="submit" className="btn btn-primary" disabled={uploading}>
-                            {uploading ? 'Subiendo...' : 'Registrar Pago'}
+                        <button type="submit" className="btn btn-primary" disabled={uploading} style={{ backgroundColor: !isTenantView ? '#188038' : undefined, borderColor: !isTenantView ? '#188038' : undefined }}>
+                            {uploading ? 'Procesando...' : (isTenantView ? 'Registrar Pago' : 'Registrar y Validar Pago')}
                         </button>
                     </div>
                 </form>
