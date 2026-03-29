@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { propertyService } from '../services/propertyService';
 import { uploadToCloudinary } from '../services/cloudinary';
 import type { PropertyService, ServicePayment } from '../types';
-import { X, CheckCircle, ArrowUpCircle, FileText } from 'lucide-react';
+import { X, CheckCircle, ArrowUpCircle, FileText, Trash2 } from 'lucide-react';
 
 interface Props {
     propertyId: string;
@@ -124,6 +124,14 @@ const ServicePaymentsModal: React.FC<Props> = ({ propertyId, service, isTenantVi
         }
     };
 
+    const handleDelete = async (paymentId: string) => {
+        if (isTenantView) return;
+        if (window.confirm("¿Estás seguro de que quieres eliminar completamente este mes? Se perderán las fotos asociadas.")) {
+            await propertyService.deleteServicePayment(propertyId, service.id, paymentId);
+            await loadPayments();
+        }
+    };
+
     const getMonthName = (m: number) => {
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         return months[m - 1] || '';
@@ -233,6 +241,13 @@ const ServicePaymentsModal: React.FC<Props> = ({ propertyId, service, isTenantVi
                                                         <CheckCircle size={16} />
                                                     </button>
                                                 )}
+                                            </div>
+                                        )}
+                                        {!isTenantView && (
+                                            <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+                                                <button onClick={() => handleDelete(pay.id)} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#fce8e6', border: '1px solid #d93025', cursor: 'pointer', color: '#d93025', borderRadius: '4px', padding: '4px 8px', fontSize: '0.8rem', fontWeight: 600 }} title="Borrar periodo completo">
+                                                    <Trash2 size={14} /> Borrar
+                                                </button>
                                             </div>
                                         )}
                                     </td>

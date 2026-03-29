@@ -104,6 +104,11 @@ export const propertyService = {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServicePayment));
     },
 
+    async deleteServicePayment(propertyId: string, serviceId: string, paymentId: string): Promise<void> {
+        const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments/${paymentId}`);
+        await deleteDoc(docRef);
+    },
+
     // ---- CONTRATOS DE ALQUILER ----
     async saveRentalContract(propertyId: string, contractData: Omit<RentalContract, 'propertyId'>): Promise<void> {
         const contractsRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts`);
