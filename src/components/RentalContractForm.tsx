@@ -4,11 +4,14 @@ import { indexService } from '../services/indexService';
 import type { RentalContract } from '../types';
 import { Save, Calendar } from 'lucide-react';
 
+import RentPaymentsList from './RentPaymentsList';
+
 interface Props {
     propertyId: string;
+    isTenantView?: boolean;
 }
 
-const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
+const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false }) => {
     const [contract, setContract] = useState<RentalContract | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -149,7 +152,7 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
                     <Calendar size={20} />
                     {contract ? 'Contrato Vigente' : 'Configurar Nuevo Contrato'}
                 </div>
-                {contract && contract.id && (
+                {contract && contract.id && !isTenantView && (
                     <button 
                         onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText(contract.id!); alert("ID de contrato copiado al portapapeles (" + contract.id + ")"); }}
                         className="btn btn-secondary" 
@@ -207,10 +210,11 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
                 </div>
             )}
 
-            <form onSubmit={handleSave}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div>
-                        <label className="label">Valor Inicial Mensual</label>
+            {!isTenantView && (
+                <form onSubmit={handleSave}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                        <div>
+                            <label className="label">Valor Inicial Mensual</label>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                            <select 
                                className="input" 
@@ -289,6 +293,15 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
                     </button>
                 </div>
             </form>
+            )}
+
+            {contract && contract.id && (
+                <RentPaymentsList 
+                    propertyId={propertyId} 
+                    contractId={contract.id} 
+                    isTenantView={isTenantView} 
+                />
+            )}
         </div>
     );
 };

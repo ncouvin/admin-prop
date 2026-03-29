@@ -1,6 +1,6 @@
 import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Property, PropertyService, ServicePayment, RentalContract, PropertyExpense } from '../types';
+import type { Property, PropertyService, ServicePayment, RentalContract, PropertyExpense, RentPayment } from '../types';
 
 const PROPERTIES_COLLECTION = 'properties';
 
@@ -151,6 +151,31 @@ export const propertyService = {
 
     async deleteExpense(propertyId: string, expenseId: string): Promise<void> {
         const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses/${expenseId}`);
+        await deleteDoc(docRef);
+    },
+
+    // ---- PAGOS CUBIERTOS DEL ALQUILER ----
+    async addRentPayment(propertyId: string, contractId: string, paymentData: Omit<RentPayment, 'id' | 'contractId'>): Promise<string> {
+        const docRef = await addDoc(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments`), {
+            ...paymentData,
+            contractId
+        });
+        return docRef.id;
+    },
+
+    async getRentPayments(propertyId: string, contractId: string): Promise<RentPayment[]> {
+        const q = query(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments`));
+        const snp = await getDocs(q);
+        return snp.docs.map(d => ({ id: d.id, ...d.data() } as RentPayment));
+    },
+
+    async updateRentPayment(propertyId: string, contractId: string, paymentId: string, data: Partial<RentPayment>): Promise<void> {
+        const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments/${paymentId}`);
+        await updateDoc(docRef, data);
+    },
+
+    async deleteRentPayment(propertyId: string, contractId: string, paymentId: string): Promise<void> {
+        const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments/${paymentId}`);
         await deleteDoc(docRef);
     }
 };

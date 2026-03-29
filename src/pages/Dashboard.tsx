@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
     const occupancyRate = totalListed === 0 ? 0 : Math.round((stats.rented / totalListed) * 100);
 
     const grossIncomeArs = stats.totalArs + (stats.totalUsd * stats.exchangeRate);
-    const netIncomeArs = grossIncomeArs - stats.totalExpensesArs;
+    const netIncomeArs = grossIncomeArs; // The user requested to NOT subtract expenses from this projected subtotal
 
     return (
         <div className="fade-in">
@@ -148,6 +148,7 @@ const Dashboard: React.FC = () => {
             <p style={{ color: '#5f6368', marginBottom: '2rem' }}>Este es el resumen financiero de tu portfolio al día de hoy.</p>
 
             {/* Top KPI Cards */}
+            <h2 style={{ fontSize: '1.2rem', color: '#5f6368', marginBottom: '1rem', borderBottom: '2px solid #dadce0', paddingBottom: '0.5rem' }}>Ingresos Proyectados</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                 
                 {/* Ingresos ARS */}
@@ -155,7 +156,7 @@ const Dashboard: React.FC = () => {
                     <div style={{ position: 'relative', zIndex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.9, marginBottom: '0.5rem' }}>
                             <BadgeDollarSign size={20} />
-                            <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ingresos Proyectados Mes (ARS)</span>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ingreso mensual alquileres en pesos</span>
                         </div>
                         <div style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>
                             $ {stats.totalArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
@@ -171,7 +172,7 @@ const Dashboard: React.FC = () => {
                     <div style={{ position: 'relative', zIndex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.9, marginBottom: '0.5rem' }}>
                             <BadgeDollarSign size={20} />
-                            <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ingresos Fijos Mes (USD)</span>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ingreso mensual alquileres en dolares</span>
                         </div>
                         <div style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>
                             U$D {stats.totalUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
@@ -187,14 +188,13 @@ const Dashboard: React.FC = () => {
                     <div style={{ position: 'relative', zIndex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.9, marginBottom: '0.5rem' }}>
                             <BadgeDollarSign size={20} />
-                            <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ganancia Neta (ARS)</span>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Subtotal de ingreso mensual alquileres</span>
                         </div>
                         <div style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>
                             $ {netIncomeArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                         </div>
                         <div style={{ fontSize: '0.85rem', opacity: 0.8, display: 'flex', justifyContent: 'space-between' }}>
                             <span>Oficial: ${stats.exchangeRate}</span>
-                            <span style={{ color: '#ffb4ab', fontWeight: 600 }}>- Gastos: ${stats.totalExpensesArs.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>

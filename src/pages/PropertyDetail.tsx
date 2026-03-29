@@ -111,7 +111,7 @@ const PropertyDetail: React.FC = () => {
                 >
                     <Zap size={18} /> Impuestos & Expensas
                 </button>
-                {(property.isRented && !isTenantView) && (
+                {property.isRented && (
                     <button
                         style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'contracts' ? '2px solid #1a73e8' : 'none', color: activeTab === 'contracts' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'contracts' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         onClick={() => setActiveTab('contracts')}
@@ -180,7 +180,7 @@ const PropertyDetail: React.FC = () => {
                 )}
 
                 {activeTab === 'contracts' && (
-                    <RentalContractForm propertyId={property.id} />
+                    <RentalContractForm propertyId={property.id} isTenantView={isTenantView} />
                 )}
 
                 {activeTab === 'expenses' && (

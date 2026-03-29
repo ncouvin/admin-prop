@@ -64,3 +64,16 @@ export interface PropertyExpense {
     description: string;
     receiptUrl?: string; // Por si suben factura del arreglo
 }
+
+export interface RentPayment {
+    id: string;
+    contractId: string;
+    year: number;
+    month: number;
+    amount: number;
+    currency: 'USD' | 'ARS';
+    paymentDate: string;
+    receiptUrl?: string;
+    isVerified: boolean;
+    tenantId?: string; // Quién lo subió
+}
