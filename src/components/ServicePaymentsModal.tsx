@@ -91,9 +91,9 @@ const ServicePaymentsModal: React.FC<Props> = ({ propertyId, service, isTenantVi
             setReceiptFile(null);
             alert("Documentación de servicio guardada exitosamente.");
             await loadPayments();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert("Error al subir el archivo.");
+            alert(`Error de Servidor: ${err.message || "Error al subir el archivo"}`);
         } finally {
             setUploading(false);
         }
