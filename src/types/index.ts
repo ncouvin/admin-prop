@@ -20,6 +20,9 @@ export interface Property {
     images?: string[]; // Array de URLs de Cloudinary
     isRented: boolean; // Si este toggle está prendido, habilita los campos de abajo
     tenantId?: string; // ID del usuario inquilino vinculado a esta propiedad
+    deedUrl?: string; // Escritura (PDF)
+    currentContractUrl?: string; // Contrato vigente en caso de existir (PDF)
+    notes?: string; // Notas de texto del propietario
 }
 
 // Sub-colección o parte de la Propiedad cuando isRented = true

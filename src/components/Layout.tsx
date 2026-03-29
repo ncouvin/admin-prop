@@ -57,8 +57,11 @@ const Layout: React.FC = () => {
                 zIndex: 10
             }}>
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
-                    <h1 style={{ fontSize: '1.25rem', color: 'var(--color-primary)' }}>Admin Prop</h1>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>{user?.name}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <img src="/logo.png" alt="Admin Prop Logo" style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '4px' }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                        <h1 style={{ fontSize: '1.25rem', color: 'var(--color-primary)', margin: 0 }}>Admin Prop</h1>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: 0 }}>{user?.name}</p>
                 </div>
 
                 <nav style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>

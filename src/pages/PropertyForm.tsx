@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { propertyService } from '../services/propertyService';
 import { uploadToCloudinary } from '../services/cloudinary';
 import type { Property } from '../types';
-import { Save, ArrowLeft, Upload, X } from 'lucide-react';
+import { Save, ArrowLeft, Upload, X, FileText } from 'lucide-react';
 
 const PropertyForm: React.FC = () => {
     const { id } = useParams();
@@ -21,7 +21,8 @@ const PropertyForm: React.FC = () => {
         name: '',
         address: '',
         estimatedValue: 0,
-        isRented: false
+        isRented: false,
+        notes: ''
     });
 
     useEffect(() => {
@@ -82,6 +83,21 @@ const PropertyForm: React.FC = () => {
         }));
     };
 
+    const handleFileUpload = async (field: 'deedUrl' | 'currentContractUrl', e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        setUploading(true);
+        try {
+            const file = e.target.files[0];
+            const url = await uploadToCloudinary(file);
+            handleChange(field, url);
+        } catch (error) {
+            console.error("Error uploading file: ", error);
+            alert("Error al subir archivo a Cloudinary.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
@@ -101,7 +117,10 @@ const PropertyForm: React.FC = () => {
                     currency: formData.currency || 'USD',
                     features: formData.features || '',
                     isRented: formData.isRented || false,
-                    images: formData.images || []
+                    images: formData.images || [],
+                    notes: formData.notes || '',
+                    deedUrl: formData.deedUrl || undefined,
+                    currentContractUrl: formData.currentContractUrl || undefined
                 };
                 await propertyService.createProperty(newProperty);
             }
@@ -207,6 +226,59 @@ const PropertyForm: React.FC = () => {
                             value={formData.features || ''}
                             onChange={e => handleChange('features', e.target.value)}
                         />
+                    </div>
+
+                    <div style={{ marginTop: '1rem' }}>
+                        <label className="label">Anotaciones Privadas y Documentos</label>
+                        <textarea
+                            className="input"
+                            rows={4}
+                            placeholder="Notas generales: códigos de puerto, información de vecinos, detalles privados..."
+                            value={formData.notes || ''}
+                            onChange={e => handleChange('notes', e.target.value)}
+                        />
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                        <div>
+                            <label className="label">Adjuntar Escritura (PDF/Foto)</label>
+                            {formData.deedUrl ? (
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <a href={formData.deedUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ flex: 1, textAlign: 'center' }}>
+                                        <FileText size={18} /> Ver Documento Actual
+                                    </a>
+                                    <button type="button" className="btn btn-danger" onClick={() => handleChange('deedUrl', null)}>
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="btn btn-secondary" style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer', width: '100%' }}>
+                                    <Upload size={18} />
+                                    {uploading ? 'Subiendo...' : 'Subir Archivo'}
+                                    <input type="file" accept=".pdf,image/*" hidden onChange={e => handleFileUpload('deedUrl', e)} disabled={uploading}/>
+                                </label>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="label">Contrato de Alquiler Vigente</label>
+                            {formData.currentContractUrl ? (
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <a href={formData.currentContractUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ flex: 1, textAlign: 'center' }}>
+                                        <FileText size={18} /> Ver Contrato Actual
+                                    </a>
+                                    <button type="button" className="btn btn-danger" onClick={() => handleChange('currentContractUrl', null)}>
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="btn btn-secondary" style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer', width: '100%' }}>
+                                    <Upload size={18} />
+                                    {uploading ? 'Subiendo...' : 'Subir Archivo'}
+                                    <input type="file" accept=".pdf,image/*" hidden onChange={e => handleFileUpload('currentContractUrl', e)} disabled={uploading}/>
+                                </label>
+                            )}
+                        </div>
                     </div>
                     
                     <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
