@@ -36,8 +36,20 @@ const PropertyForm: React.FC = () => {
                 }
             };
             fetchProperty();
+        } else {
+            const checkLimit = async () => {
+                if (!user) return;
+                const owned = await propertyService.getPropertiesByOwner(user.id);
+                const masterOwned = owned.filter(p => p.ownerId === user.id);
+                
+                if (masterOwned.length >= user.maxProperties) {
+                    alert('Límite de propiedades activas alcanzado. Serás redirigido a la tienda para ampliar tu cupo.');
+                    navigate('/upgrade');
+                }
+            };
+            checkLimit();
         }
-    }, [id, navigate]);
+    }, [id, user, navigate]);
 
     const handleChange = (field: keyof Property, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));

@@ -101,10 +101,11 @@ const PropertyDetail: React.FC = () => {
                     {isMasterOwner && (
                         <>
                             <button className="btn btn-secondary" onClick={() => {
-                                alert(`ID para Compartir (Copropietarios):\n\n${property.id}\n\nPueden ingresarlo desde el Dashboard en el botón vincular.`);
+                                navigator.clipboard.writeText(property.id);
+                                alert(`¡Copiado al portapapeles!\n\nID: ${property.id}\n\nPásaselo a tu Copropietario para que lo vincule desde su Dashboard.`);
                             }}>
                                 <Key size={20} />
-                                ID Compartir
+                                Compartir ID
                             </button>
                             <button className="btn btn-secondary" onClick={() => navigate(`/properties/${id}/edit`)}>
                                 <Edit size={20} />

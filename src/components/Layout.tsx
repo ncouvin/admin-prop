@@ -10,9 +10,13 @@ import {
     MessageSquare,
     Settings,
     LogOut,
-    Key
+    Key,
+    Tag,
+    Zap
 } from 'lucide-react';
 import { APP_VERSION } from '../version';
+
+export const IS_SUPER_ADMIN = (email: string | undefined | null) => email === 'ncouvin@gmail.com';
 
 const Layout: React.FC = () => {
     const { user, logout } = useAuth();
@@ -93,12 +97,27 @@ const Layout: React.FC = () => {
                         Mis Mensajes
                     </Link>
 
+                    <Link to="/upgrade" style={navItemStyle('/upgrade')}>
+                        <Zap size={20} />
+                        Mi Suscripción
+                    </Link>
+
                     <div style={{ margin: '1rem 0', borderTop: '1px solid var(--color-border)' }}></div>
 
                     <Link to="/settings" style={navItemStyle('/settings')}>
                         <Settings size={20} />
                         Configuración
                     </Link>
+
+                    {IS_SUPER_ADMIN(user?.email) && (
+                        <>
+                            <div style={{ margin: '1rem 0', borderTop: '1px solid var(--color-border)' }}></div>
+                            <Link to="/admin/coupons" style={navItemStyle('/admin/coupons')}>
+                                <Tag size={20} />
+                                Gestión Cupones
+                            </Link>
+                        </>
+                    )}
                 </nav>
 
                 <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -114,8 +133,10 @@ const Layout: React.FC = () => {
                         <LogOut size={20} />
                         Cerrar Sesión
                     </button>
-                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#9aa0a6', marginTop: '0.5rem' }}>
-                        Admin Prop {APP_VERSION}
+                    <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#9aa0a6', marginTop: '0.5rem', lineHeight: '1.4' }}>
+                        Admin Prop {APP_VERSION}<br />
+                        Desarrollado por Nicolás Couvin<br />
+                        <a href="mailto:info@malabar.tv" style={{ color: 'inherit', textDecoration: 'underline' }}>info@malabar.tv</a>
                     </div>
                 </div>
             </aside>

@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User } from '../types';
 import { auth, googleProvider } from '../services/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { userService } from '../services/userService';
+import type { AppUser } from '../services/userService';
 
 interface AuthContextType {
-    user: User | null;
+    user: AppUser | null;
     loginWithGoogle: () => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
@@ -13,18 +14,19 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AppUser | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                const appUser: User = {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || 'Propietario',
-                    email: firebaseUser.email || ''
-                };
-                setUser(appUser);
+                try {
+                    const appUser = await userService.getOrCreateUser(firebaseUser);
+                    setUser(appUser);
+                } catch (error) {
+                    console.error("Error creating/fetching user profile:", error);
+                    setUser(null);
+                }
             } else {
                 setUser(null);
             }

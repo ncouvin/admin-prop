@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Función auxiliar para saber si el usuario pertenece a la propiedad
+    function isPropertyMember(propData) {
+      return request.auth.uid == propData.ownerId 
+             || (propData.coOwnerIds != null && request.auth.uid in propData.coOwnerIds)
+             || request.auth.uid == propData.tenantId;
+    }
+
+    match /properties/{propertyId} {
+      allow read: if request.auth != null && isPropertyMember(resource.data);
+      // El inquilino NO puede borrar, pero sí necesita leer
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && isPropertyMember(resource.data);
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      
+      match /contracts/{contractId} {
+         allow read, write: if request.auth != null && isPropertyMember(get(/databases/$(database)/documents/properties/$(propertyId)).data);
+         
+         match /payments/{paymentId} {
+            allow read, write: if request.auth != null && isPropertyMember(get(/databases/$(database)/documents/properties/$(propertyId)).data);
+         }
+         match /messages/{messageId} {
+            allow read, write: if request.auth != null && isPropertyMember(get(/databases/$(database)/documents/properties/$(propertyId)).data);
+         }
+      }
+      
+      match /expenses/{expenseId} {
+         allow read, write: if request.auth != null && isPropertyMember(get(/databases/$(database)/documents/properties/$(propertyId)).data);
+      }
+      match /services/{serviceId} {
+         allow read, write: if request.auth != null && isPropertyMember(get(/databases/$(database)/documents/properties/$(propertyId)).data);
+         
+         match /payments/{paymentId} {
+            allow read, write: if request.auth != null && isPropertyMember(get(/databases/$(database)/documents/properties/$(propertyId)).data);
+         }
+      }
+    }
+
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Sólo para backend o Admin:
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /coupons/{couponId} {
+      // El Súper Admin (ncouvin@gmail.com) o lectura libre si existe cupón?
+      // La validación de cupón requiere leerlo para ver su descuento y si está activo.
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.email == "ncouvin@gmail.com";
+    }
+
+    match /index_data/{docId} {
+      // Data pública
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    match /exchange_rates/{docId} {
+      // Data pública
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
