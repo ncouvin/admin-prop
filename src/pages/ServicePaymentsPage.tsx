@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { propertyService } from '../services/propertyService';
 import { uploadToCloudinary } from '../services/cloudinary';
 import type { PropertyService, ServicePayment } from '../types';
-import { CheckCircle, ArrowUpCircle, FileText, Trash2, ArrowLeft } from 'lucide-react';
+import { CheckCircle, ArrowUpCircle, FileText, Trash2, ArrowLeft, Edit2, Save, X } from 'lucide-react';
 
 const ServicePaymentsPage: React.FC = () => {
     const { id: propertyId, serviceId } = useParams<{ id: string; serviceId: string }>();
@@ -25,6 +25,10 @@ const ServicePaymentsPage: React.FC = () => {
     const [amount, setAmount] = useState('');
     const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
     const [receiptFile, setReceiptFile] = useState<File | null>(null);
+
+    // Edit State for Montos
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editAmount, setEditAmount] = useState<string>('');
 
     const loadData = async () => {
         if (!propertyId || !serviceId) return;
@@ -129,17 +133,39 @@ const ServicePaymentsPage: React.FC = () => {
         }
     };
 
-    const handleDelete = async (paymentId: string) => {
+    const handleDelete = async (pay: ServicePayment) => {
         if (!propertyId || !service) return;
-        if (isTenantView) return;
-        if (window.confirm("¿Estás seguro de que quieres eliminar completamente este mes? Se perderán las fotos asociadas.")) {
+        if (isTenantView && pay.isVerified) {
+            alert("No puedes borrar un pago que ya fue verificado por el propietario.");
+            return;
+        }
+        if (window.confirm("¿Estás seguro de que quieres eliminar completamente este reporte? Se perderán las fotos asociadas.")) {
             try {
-                await propertyService.deleteServicePayment(propertyId, service.id, paymentId);
+                await propertyService.deleteServicePayment(propertyId, service.id, pay.id);
                 await loadData();
             } catch (err: any) {
                 console.error("Delete Error:", err);
                 alert(`Error al borrar: ${err.message}`);
             }
+        }
+    };
+
+    const startEditing = (pay: ServicePayment) => {
+        setEditingId(pay.id);
+        setEditAmount(pay.amount ? pay.amount.toString() : '');
+    };
+
+    const saveEdit = async (pay: ServicePayment) => {
+        if (!propertyId || !service) return;
+        try {
+            await propertyService.saveServicePayment(propertyId, service.id, {
+                ...pay,
+                amount: editAmount ? parseFloat(editAmount) : undefined
+            });
+            setEditingId(null);
+            await loadData();
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -229,7 +255,7 @@ const ServicePaymentsPage: React.FC = () => {
                                     <th style={{ padding: '1.2rem 1rem', color: '#202124', textAlign: 'center' }}>Factura PDF/Foto</th>
                                     <th style={{ padding: '1.2rem 1rem', color: '#202124', textAlign: 'center' }}>Ticket PDF/Foto</th>
                                     <th style={{ padding: '1.2rem 1rem', color: '#202124', textAlign: 'center' }}>Firma Autorizada</th>
-                                    {!isTenantView && <th style={{ padding: '1.2rem 1rem', color: '#202124', textAlign: 'center' }}>Borrar</th>}
+                                    <th style={{ padding: '1.2rem 1rem', color: '#202124', textAlign: 'center' }}>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -237,7 +263,11 @@ const ServicePaymentsPage: React.FC = () => {
                                     <tr key={pay.id} style={{ borderBottom: '1px solid #dadce0', backgroundColor: pay.isVerified ? '#f6fdf6' : '#fff', transition: 'background-color 0.2s' }}>
                                         <td style={{ padding: '1rem', fontWeight: 600, fontSize: '1.1rem' }}>{getMonthName(pay.month)} / {pay.year}</td>
                                         <td style={{ padding: '1rem', fontWeight: 600, color: '#1a73e8', fontSize: '1.1rem' }}>
-                                            {pay.amount ? `$ ${pay.amount.toLocaleString()}` : '-'}
+                                            {editingId === pay.id ? (
+                                                <input type="number" step="0.01" className="input" style={{ width: '100px', padding: '0.4rem' }} value={editAmount} onChange={e => setEditAmount(e.target.value)} />
+                                            ) : (
+                                                pay.amount ? `$ ${pay.amount.toLocaleString()}` : '-'
+                                            )}
                                         </td>
                                         
                                         <td style={{ padding: '1rem', textAlign: 'center' }}>
@@ -274,20 +304,41 @@ const ServicePaymentsPage: React.FC = () => {
                                                 </div>
                                             )}
                                         </td>
-                                        
-                                        {!isTenantView && (
-                                            <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                                <button 
-                                                    onClick={() => handleDelete(pay.id)} 
-                                                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #dadce0', cursor: 'pointer', color: '#d93025', borderRadius: '6px', padding: '0.6rem', transition: 'all 0.2s' }} 
-                                                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fce8e6'; e.currentTarget.style.borderColor = '#d93025'; }}
-                                                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#dadce0'; }}
-                                                    title="Eliminar periodo y fotos permanentemente"
-                                                >
-                                                    <Trash2 size={20} />
-                                                </button>
-                                            </td>
-                                        )}
+                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                            {editingId === pay.id ? (
+                                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                                    <button onClick={() => saveEdit(pay)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #10b981', cursor: 'pointer', color: '#10b981', borderRadius: '6px', padding: '0.6rem', transition: 'all 0.2s' }} title="Guardar">
+                                                        <Save size={18} />
+                                                    </button>
+                                                    <button onClick={() => setEditingId(null)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #dadce0', cursor: 'pointer', color: '#5f6368', borderRadius: '6px', padding: '0.6rem', transition: 'all 0.2s' }} title="Cancelar">
+                                                        <X size={18} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                (!pay.isVerified || !isTenantView) && (
+                                                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                                        <button 
+                                                            onClick={() => startEditing(pay)} 
+                                                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #dadce0', cursor: 'pointer', color: '#1a73e8', borderRadius: '6px', padding: '0.6rem', transition: 'all 0.2s' }} 
+                                                            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e8f0fe'; e.currentTarget.style.borderColor = '#1a73e8'; }}
+                                                            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#dadce0'; }}
+                                                            title="Editar Monto"
+                                                        >
+                                                            <Edit2 size={18} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDelete(pay)} 
+                                                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #dadce0', cursor: 'pointer', color: '#d93025', borderRadius: '6px', padding: '0.6rem', transition: 'all 0.2s' }} 
+                                                            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fce8e6'; e.currentTarget.style.borderColor = '#d93025'; }}
+                                                            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#dadce0'; }}
+                                                            title="Eliminar Reporte Permanentemente"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                )
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
