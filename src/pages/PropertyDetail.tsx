@@ -153,15 +153,17 @@ const PropertyDetail: React.FC = () => {
                                 {property.features || 'No hay características descriptivas detalladas.'}
                             </p>
                         </div>
-                        <div className="card">
-                            <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Finanzas Básicas</h3>
-                            <div style={{ backgroundColor: '#f8f9fa', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dadce0' }}>
-                                <div style={{ fontSize: '0.9rem', color: '#5f6368', marginBottom: '0.25rem' }}>Valor de Mercado Estimado</div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1a73e8' }}>
-                                    {property.currency} {property.estimatedValue?.toLocaleString() || '0'}
+                        {(!isTenantView) && (
+                            <div className="card">
+                                <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Finanzas Básicas</h3>
+                                <div style={{ backgroundColor: '#f8f9fa', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dadce0' }}>
+                                    <div style={{ fontSize: '0.9rem', color: '#5f6368', marginBottom: '0.25rem' }}>Valor de Mercado Estimado</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1a73e8' }}>
+                                        {property.currency} {property.estimatedValue?.toLocaleString() || '0'}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
 

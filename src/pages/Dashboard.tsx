@@ -142,6 +142,31 @@ const Dashboard: React.FC = () => {
     const grossIncomeArs = stats.totalArs + (stats.totalUsd * stats.exchangeRate);
     const netIncomeArs = grossIncomeArs; // The user requested to NOT subtract expenses from this projected subtotal
 
+    if (properties.length === 0) {
+        return (
+            <div className="fade-in">
+                <h1 style={{ fontSize: '1.8rem', color: '#202124', marginBottom: '0.5rem' }}>Hola, {user?.name?.split(' ')[0]}</h1>
+                <p style={{ color: '#5f6368', marginBottom: '2rem' }}>Bienvenido a Admin Prop.</p>
+
+                <div className="card" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center', padding: '3rem' }}>
+                    <Home size={48} color="#1a73e8" style={{ marginBottom: '1.5rem', opacity: 0.8 }} />
+                    <h2 style={{ fontSize: '1.5rem', color: '#202124', marginBottom: '1rem' }}>No administras propiedades aún</h2>
+                    <p style={{ color: '#5f6368', marginBottom: '2rem', lineHeight: 1.5 }}>
+                        Para visualizar tus proyecciones financieras y administrar tu rendimiento, da de alta tu primera unidad. Si eres inquilino, dirígete a tu sección de alquileres.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                        <button className="btn btn-primary" onClick={() => window.location.href = '/properties/new'} style={{ width: '100%', maxWidth: '300px' }}>
+                            + Alta de Nueva Propiedad
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => window.location.href = '/rentals'} style={{ width: '100%', maxWidth: '300px' }}>
+                            Soy Inquilino / Ver mis Alquileres
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fade-in">
             <h1 style={{ fontSize: '1.8rem', color: '#202124', marginBottom: '0.5rem' }}>Hola, {user?.name?.split(' ')[0]}</h1>

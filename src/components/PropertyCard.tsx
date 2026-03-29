@@ -9,9 +9,17 @@ interface PropertyCardProps {
     currentRentAmount?: number;
     rentCurrency?: 'USD' | 'ARS';
     hasUnpaidServices?: boolean;
+    isTenantView?: boolean;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, hasActiveContract, currentRentAmount, rentCurrency, hasUnpaidServices }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ 
+    property, 
+    hasActiveContract, 
+    currentRentAmount, 
+    rentCurrency, 
+    hasUnpaidServices,
+    isTenantView 
+}) => {
     const navigate = useNavigate();
 
     return (
@@ -74,10 +82,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, hasActiveContract
                             <span>{rentCurrency} {currentRentAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                         </>
                     ) : (
-                        <>
-                            <span style={{ fontSize: '0.7rem', color: '#5f6368', fontWeight: 500, lineHeight: 1 }}>Valor Venta Est.</span>
-                            <span>{property.currency} {property.estimatedValue?.toLocaleString()}</span>
-                        </>
+                        !isTenantView ? (
+                            <>
+                                <span style={{ fontSize: '0.7rem', color: '#5f6368', fontWeight: 500, lineHeight: 1 }}>Valor Venta Est.</span>
+                                <span>{property.currency} {property.estimatedValue?.toLocaleString()}</span>
+                            </>
+                        ) : null
                     )}
                 </span>
             </div>
