@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { propertyService } from '../services/propertyService';
 import { uploadToCloudinary } from '../services/cloudinary';
-import type { PropertyService, ServicePayment } from '../types';
-import { Plus, Trash2, Upload, ExternalLink, CheckCircle, Clock } from 'lucide-react';
+import type { PropertyService, ServiceFrequency, ServicePayment } from '../types';
+import { Plus, Trash2, Upload, ExternalLink, CheckCircle, Clock, Edit2, Save, FileText } from 'lucide-react';
+import ServicePaymentsModal from './ServicePaymentsModal';
 
 interface Props {
     propertyId: string;
@@ -18,6 +19,15 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
     const [newServiceName, setNewServiceName] = useState('');
     const [newProviderName, setNewProviderName] = useState('');
     const [newAccountNumber, setNewAccountNumber] = useState('');
+    const [newFrequency, setNewFrequency] = useState<ServiceFrequency>('Mensual');
+    const [newDueDate, setNewDueDate] = useState<number | ''>(10);
+
+    // Estado del Modal de Historial
+    const [selectedService, setSelectedService] = useState<PropertyService | null>(null);
+
+    // Estado de Edición Inline
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editForm, setEditForm] = useState<Partial<PropertyService>>({});
 
     // Estado de pagos indexado: pagos[serviceId][month]
     const [payments, setPayments] = useState<{ [serviceId: string]: { [month: number]: ServicePayment } }>({});
@@ -60,15 +70,30 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
             await propertyService.addServiceToProperty(propertyId, {
                 name: newServiceName,
                 providerName: newProviderName,
-                accountNumber: newAccountNumber
+                accountNumber: newAccountNumber,
+                frequency: newFrequency,
+                estimatedDueDate: newDueDate ? Number(newDueDate) : undefined
             });
             setNewServiceName('');
             setNewProviderName('');
             setNewAccountNumber('');
+            setNewFrequency('Mensual');
+            setNewDueDate(10);
             await loadData();
         } catch (error) {
             console.error("Error adding service", error);
             alert("Error al guardar el servicio.");
+        }
+    };
+
+    const handleSaveEdit = async (serviceId: string) => {
+        try {
+            await propertyService.updateService(propertyId, serviceId, editForm);
+            setEditingId(null);
+            await loadData();
+        } catch (error) {
+            console.error(error);
+            alert("Error al actualizar");
         }
     };
 
@@ -171,8 +196,22 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                         <input type="text" className="input" placeholder="Ej: Edesur, Metrogas..." value={newProviderName} onChange={e => setNewProviderName(e.target.value)} />
                     </div>
                     <div style={{ flex: 1, minWidth: '150px' }}>
-                        <label className="label">Nro de Cliente / Medidor</label>
+                        <label className="label">Nro Cuenta/Ref</label>
                         <input type="text" className="input" placeholder="Nro opcional..." value={newAccountNumber} onChange={e => setNewAccountNumber(e.target.value)} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: '120px' }}>
+                        <label className="label">Frecuencia</label>
+                        <select className="input" value={newFrequency} onChange={e => setNewFrequency(e.target.value as ServiceFrequency)}>
+                            <option value="Mensual">Mensual</option>
+                            <option value="Bimestral">Bimestral</option>
+                            <option value="Trimestral">Trimestral</option>
+                            <option value="Semestral">Semestral</option>
+                            <option value="Anual">Anual</option>
+                        </select>
+                    </div>
+                    <div style={{ flex: 1, minWidth: '100px' }}>
+                        <label className="label">Vto (Día)</label>
+                        <input type="number" min="1" max="31" className="input" placeholder="10" value={newDueDate} onChange={e => setNewDueDate(Number(e.target.value) || '')} />
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ height: '42px', padding: '0 1.5rem' }}>
                         <Plus size={18} /> Agregar
@@ -210,12 +249,42 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                             </tr>
                         </thead>
                         <tbody>
-                            {services.map(srv => (
-                                <tr key={srv.id} style={{ borderBottom: '1px solid #dadce0' }}>
-                                    <td style={{ padding: '1rem', fontWeight: 600, color: '#1a73e8' }}>{srv.name}</td>
+                            {services.map(srv => {
+                                const isEditing = editingId === srv.id;
+                                return (
+                                <tr key={srv.id} style={{ borderBottom: '1px solid #dadce0', backgroundColor: isEditing ? '#f8f9fa' : 'transparent' }}>
+                                    <td style={{ padding: '1rem', fontWeight: 600, color: '#1a73e8' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+                                            {isEditing ? (
+                                                <input type="text" className="input" value={editForm.name || ''} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={{ padding: '0.3rem', width: '120px' }} />
+                                            ) : (
+                                                <span style={{ fontSize: '1.1rem' }}>{srv.name}</span>
+                                            )}
+                                            
+                                            <button onClick={() => setSelectedService(srv)} className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.3rem 0.5rem', height: 'auto', backgroundColor: '#e8f0fe', color: '#1a73e8', border: '1px solid #1a73e8' }}>
+                                                <FileText size={14} /> Cargar Comprobantes
+                                            </button>
+                                        </div>
+                                    </td>
                                     <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#5f6368' }}>
-                                        {srv.providerName && <div><span style={{ fontWeight: 500 }}>Prov:</span> {srv.providerName}</div>}
-                                        {srv.accountNumber && <div><span style={{ fontWeight: 500 }}>Ref:</span> {srv.accountNumber}</div>}
+                                        {isEditing ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                                <input type="text" className="input" placeholder="Proveedor" value={editForm.providerName || ''} onChange={e => setEditForm({...editForm, providerName: e.target.value})} style={{ padding: '0.3rem' }} />
+                                                <input type="text" className="input" placeholder="Nro Cuenta" value={editForm.accountNumber || ''} onChange={e => setEditForm({...editForm, accountNumber: e.target.value})} style={{ padding: '0.3rem' }} />
+                                                <select className="input" value={editForm.frequency || 'Mensual'} onChange={e => setEditForm({...editForm, frequency: e.target.value as ServiceFrequency})} style={{ padding: '0.3rem' }}>
+                                                    <option>Mensual</option><option>Bimestral</option><option>Trimestral</option><option>Anual</option>
+                                                </select>
+                                                <input type="number" className="input" placeholder="Día Vto" value={editForm.estimatedDueDate || ''} onChange={e => setEditForm({...editForm, estimatedDueDate: Number(e.target.value)})} style={{ padding: '0.3rem' }} />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {srv.providerName && <div><span style={{ fontWeight: 500 }}>Prov:</span> {srv.providerName}</div>}
+                                                {srv.accountNumber && <div><span style={{ fontWeight: 500 }}>Ref:</span> {srv.accountNumber}</div>}
+                                                <div style={{ marginTop: '0.2rem', color: '#1a73e8', fontWeight: 500 }}>
+                                                    {srv.frequency || 'Mensual'} {srv.estimatedDueDate ? `(Vto día ${srv.estimatedDueDate})` : ''}
+                                                </div>
+                                            </>
+                                        )}
                                     </td>
                                     
                                     {months.map(m => {
@@ -265,16 +334,42 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
 
                                     {!isTenantView && (
                                         <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <button onClick={() => handleDeleteService(srv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d93025' }} title="Eliminar Servicio">
-                                                <Trash2 size={18} />
-                                            </button>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
+                                                {isEditing ? (
+                                                    <button onClick={() => handleSaveEdit(srv.id)} style={{ background: '#e6f4ea', border: '1px solid #188038', cursor: 'pointer', color: '#188038', borderRadius: '4px', padding: '6px' }} title="Guardar">
+                                                        <Save size={16} />
+                                                    </button>
+                                                ) : (
+                                                    <button onClick={() => { setEditingId(srv.id); setEditForm(srv); }} style={{ background: '#f1f3f4', border: '1px solid #dadce0', cursor: 'pointer', color: '#5f6368', borderRadius: '4px', padding: '6px' }} title="Editar">
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                )}
+                                                
+                                                <button onClick={() => handleDeleteService(srv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d93025' }} title="Eliminar Servicio">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </td>
                                     )}
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {/* Modal de Detalle de Pagos / Facturas */}
+            {selectedService && (
+                <ServicePaymentsModal 
+                    service={selectedService} 
+                    propertyId={propertyId} 
+                    isTenantView={isTenantView} 
+                    onClose={() => {
+                        setSelectedService(null);
+                        loadData(); // Refrescar grilla rápida de relojes
+                    }} 
+                />
             )}
         </div>
     );

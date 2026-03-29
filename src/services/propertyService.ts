@@ -66,6 +66,11 @@ export const propertyService = {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PropertyService));
     },
 
+    async updateService(propertyId: string, serviceId: string, serviceData: Partial<PropertyService>): Promise<void> {
+        const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}`);
+        await updateDoc(docRef, serviceData);
+    },
+
     async deleteService(propertyId: string, serviceId: string): Promise<void> {
         const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}`);
         await deleteDoc(docRef);

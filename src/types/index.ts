@@ -34,12 +34,16 @@ export interface RentalContract {
 }
 
 // Qué servicios tiene enganchados esta propiedad.
+export type ServiceFrequency = 'Mensual' | 'Bimestral' | 'Trimestral' | 'Semestral' | 'Anual';
+
 export interface PropertyService {
     id: string;
     propertyId: string;
     name: string; // Ej: "Expensas", "Electricidad", "Gas", "Agua", "ABL"
     providerName?: string; // Ej: "Edenor", "Metrogas"
     accountNumber?: string; // Número de medidor o cliente
+    frequency?: ServiceFrequency;
+    estimatedDueDate?: number; // 1-31
 }
 
 // Cuánto se pagó, cuándo y el comprobante, por cada PropertyService, por cada mes.
@@ -53,6 +57,8 @@ export interface ServicePayment {
     amount?: number;
     paymentDate?: string; // Cuando se pagó
     receiptUrl?: string; // Foto/PDF del comprobante en Firebase Storage
+    invoiceUrl?: string; // Factura Original a Pagar
+    isVerified?: boolean; // Confirmado por el Propietario
 }
 
 export interface PropertyExpense {
