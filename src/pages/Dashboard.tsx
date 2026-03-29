@@ -19,7 +19,8 @@ const Dashboard: React.FC = () => {
         totalArs: 0,
         totalUsd: 0,
         rented: 0,
-        available: 0
+        available: 0,
+        listed: 0
     });
 
     useEffect(() => {
@@ -34,12 +35,14 @@ const Dashboard: React.FC = () => {
                 let sumArs = 0;
                 let sumUsd = 0;
                 let rentedCount = 0;
+                let listedCount = 0;
 
                 const enrichedProps = await Promise.all(userProperties.map(async (prop) => {
                     let activeContract = null;
                     let currentRent = 0;
 
                     if (prop.isRented) {
+                        listedCount++;
                         activeContract = await propertyService.getActiveRentalContract(prop.id);
                         if (activeContract) {
                             rentedCount++;
@@ -82,7 +85,8 @@ const Dashboard: React.FC = () => {
                     totalArs: sumArs,
                     totalUsd: sumUsd,
                     rented: rentedCount,
-                    available: userProperties.length - rentedCount
+                    available: listedCount - rentedCount,
+                    listed: listedCount
                 });
 
             } catch (error) {
@@ -103,8 +107,8 @@ const Dashboard: React.FC = () => {
         );
     }
 
-    const totalProps = properties.length;
-    const occupancyRate = totalProps === 0 ? 0 : Math.round((stats.rented / totalProps) * 100);
+    const totalListed = stats.listed;
+    const occupancyRate = totalListed === 0 ? 0 : Math.round((stats.rented / totalListed) * 100);
 
     return (
         <div className="fade-in">
