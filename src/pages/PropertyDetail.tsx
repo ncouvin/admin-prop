@@ -5,10 +5,11 @@ import { propertyService } from '../services/propertyService';
 import type { Property } from '../types';
 import {
     Building, MapPin, Edit, Trash2,
-    ArrowLeft, Zap, Image as ImageIcon, Key
+    ArrowLeft, Zap, Image as ImageIcon, Key, Wrench
 } from 'lucide-react';
 import ServicesList from '../components/ServicesList';
 import RentalContractForm from '../components/RentalContractForm';
+import ExpensesList from '../components/ExpensesList';
 
 const PropertyDetail: React.FC = () => {
     const { id } = useParams();
@@ -16,7 +17,7 @@ const PropertyDetail: React.FC = () => {
     const { user } = useAuth();
     const [property, setProperty] = useState<Property | null>(null);
     const [hasActiveContract, setHasActiveContract] = useState(false);
-    const [activeTab, setActiveTab] = useState<'details' | 'services' | 'contracts' | 'photos'>('details');
+    const [activeTab, setActiveTab] = useState<'details' | 'services' | 'contracts' | 'expenses' | 'photos'>('details');
 
     useEffect(() => {
         if (id && user) {
@@ -118,6 +119,14 @@ const PropertyDetail: React.FC = () => {
                         <Key size={18} /> Contrato de Alquiler
                     </button>
                 )}
+                {(!isTenantView || (isTenantView && property.isRented)) && (
+                    <button
+                        style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'expenses' ? '2px solid #1a73e8' : 'none', color: activeTab === 'expenses' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'expenses' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        onClick={() => setActiveTab('expenses')}
+                    >
+                        <Wrench size={18} /> Gastos / Arreglos
+                    </button>
+                )}
                 <button
                     style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'photos' ? '2px solid #1a73e8' : 'none', color: activeTab === 'photos' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'photos' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     onClick={() => setActiveTab('photos')}
@@ -172,6 +181,10 @@ const PropertyDetail: React.FC = () => {
 
                 {activeTab === 'contracts' && (
                     <RentalContractForm propertyId={property.id} />
+                )}
+
+                {activeTab === 'expenses' && (
+                    <ExpensesList propertyId={property.id} isTenantView={isTenantView} />
                 )}
             </div>
         </div>

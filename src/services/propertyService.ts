@@ -1,6 +1,6 @@
 import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, collectionGroup } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Property, PropertyService, ServicePayment, RentalContract } from '../types';
+import type { Property, PropertyService, ServicePayment, RentalContract, PropertyExpense } from '../types';
 
 const PROPERTIES_COLLECTION = 'properties';
 
@@ -132,5 +132,25 @@ export const propertyService = {
             return true;
         }
         return false;
+    },
+
+    // ---- GASTOS Y ARREGLOS ----
+    async addExpense(propertyId: string, expenseData: Omit<PropertyExpense, 'id' | 'propertyId'>): Promise<string> {
+        const docRef = await addDoc(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses`), {
+            ...expenseData,
+            propertyId
+        });
+        return docRef.id;
+    },
+
+    async getExpenses(propertyId: string): Promise<PropertyExpense[]> {
+        const q = query(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses`));
+        const snp = await getDocs(q);
+        return snp.docs.map(d => ({ id: d.id, ...d.data() } as PropertyExpense));
+    },
+
+    async deleteExpense(propertyId: string, expenseId: string): Promise<void> {
+        const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses/${expenseId}`);
+        await deleteDoc(docRef);
     }
 };

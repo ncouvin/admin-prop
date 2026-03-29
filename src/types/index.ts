@@ -54,3 +54,13 @@ export interface ServicePayment {
     paymentDate?: string; // Cuando se pagó
     receiptUrl?: string; // Foto/PDF del comprobante en Firebase Storage
 }
+
+export interface PropertyExpense {
+    id: string;
+    propertyId: string;
+    date: string; // YYYY-MM-DD
+    amount: number;
+    currency: 'USD' | 'ARS';
+    description: string;
+    receiptUrl?: string; // Por si suben factura del arreglo
+}

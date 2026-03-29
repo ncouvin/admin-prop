@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { propertyService } from '../services/propertyService';
 import type { Property, RentalContract } from '../types';
-import { Home, FileText, BadgeDollarSign } from 'lucide-react';
+import { Home, FileText, BadgeDollarSign, Building, Wrench } from 'lucide-react';
 import { indexService } from '../services/indexService';
+import { exchangeService } from '../services/exchangeService';
 
 interface ExtendedProperty extends Property {
     activeContract?: RentalContract | null;
@@ -20,7 +21,10 @@ const Dashboard: React.FC = () => {
         totalUsd: 0,
         rented: 0,
         available: 0,
-        listed: 0
+        listed: 0,
+        totalExpensesArs: 0,
+        totalPatrimonioUsd: 0,
+        exchangeRate: 1000
     });
 
     useEffect(() => {
@@ -31,13 +35,35 @@ const Dashboard: React.FC = () => {
                 // 1. Fetch properties
                 const userProperties = await propertyService.getPropertiesByOwner(user.id);
                 
-                // 2. Resolve active contracts and simulate current exact rent
+                // 2. Fetch exchange rate
+                const exRate = await exchangeService.getOfficialDollarRate();
+
                 let sumArs = 0;
                 let sumUsd = 0;
                 let rentedCount = 0;
                 let listedCount = 0;
+                let patUsd = 0;
+                let expensesSumArs = 0;
+
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
 
                 const enrichedProps = await Promise.all(userProperties.map(async (prop) => {
+                    // Calc Patrimonio
+                    if (prop.estimatedValue) {
+                        if (prop.currency === 'ARS') patUsd += prop.estimatedValue / exRate;
+                        else patUsd += prop.estimatedValue;
+                    }
+
+                    // Sum Expenses current month
+                    const reqExp = await propertyService.getExpenses(prop.id);
+                    reqExp.forEach(ex => {
+                        const d = new Date(ex.date + 'T00:00:00');
+                        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                            if (ex.currency === 'USD') expensesSumArs += ex.amount * exRate;
+                            else expensesSumArs += ex.amount;
+                        }
+                    });
                     let activeContract = null;
                     let currentRent = 0;
 
@@ -86,7 +112,10 @@ const Dashboard: React.FC = () => {
                     totalUsd: sumUsd,
                     rented: rentedCount,
                     available: listedCount - rentedCount,
-                    listed: listedCount
+                    listed: listedCount,
+                    totalExpensesArs: expensesSumArs,
+                    totalPatrimonioUsd: patUsd,
+                    exchangeRate: exRate
                 });
 
             } catch (error) {
@@ -109,6 +138,9 @@ const Dashboard: React.FC = () => {
 
     const totalListed = stats.listed;
     const occupancyRate = totalListed === 0 ? 0 : Math.round((stats.rented / totalListed) * 100);
+
+    const grossIncomeArs = stats.totalArs + (stats.totalUsd * stats.exchangeRate);
+    const netIncomeArs = grossIncomeArs - stats.totalExpensesArs;
 
     return (
         <div className="fade-in">
@@ -149,10 +181,46 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Ingresos Netos ARS */}
+                <div className="card" style={{ background: 'linear-gradient(135deg, #1e8e3e 0%, #135c28 100%)', color: '#fff', border: 'none', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: 0.9, marginBottom: '0.5rem' }}>
+                            <BadgeDollarSign size={20} />
+                            <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ganancia Neta (ARS)</span>
+                        </div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>
+                            $ {netIncomeArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                        </div>
+                        <div style={{ fontSize: '0.85rem', opacity: 0.8, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Oficial: ${stats.exchangeRate}</span>
+                            <span style={{ color: '#ffb4ab', fontWeight: 600 }}>- Gastos: ${stats.totalExpensesArs.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Ocupación y Resumen Operativo */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+
+                {/* Patrimonio */}
+                <div className="card">
+                    <h3 style={{ fontSize: '1.1rem', color: '#202124', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Building size={20} color="#1a73e8" /> 
+                        Patrimonio Inmobiliario
+                    </h3>
+                    
+                    <div style={{ fontSize: '0.95rem', color: '#5f6368', marginBottom: '0.2rem' }}>Valor de Mercado Estimado (USD)</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#1a73e8', marginBottom: '1.5rem' }}>
+                        U$D {stats.totalPatrimonioUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </div>
+
+                    <div style={{ width: '100%', height: '1px', backgroundColor: '#dadce0', margin: '1rem 0' }}></div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#d93025', fontSize: '0.95rem', fontWeight: 500 }}>
+                        <Wrench size={16} /> Gastos reportados este mes: $ {stats.totalExpensesArs.toLocaleString()} ARS
+                    </div>
+                </div>
                 
                 {/* Occupancy Bar */}
                 <div className="card">
