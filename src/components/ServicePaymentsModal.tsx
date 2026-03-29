@@ -70,7 +70,7 @@ const ServicePaymentsModal: React.FC<Props> = ({ propertyId, service, isTenantVi
             // Verificamos si ya existe ese periodo para actualizarlo (fusionar facturas/comprobantes)
             const existing = payments.find(p => p.month === month && p.year === year);
 
-            const paymentData: ServicePayment = {
+            const rawData: Partial<ServicePayment> = {
                 id: existing?.id || '',
                 serviceId: service.id,
                 propertyId,
@@ -83,6 +83,19 @@ const ServicePaymentsModal: React.FC<Props> = ({ propertyId, service, isTenantVi
                 paymentDate: (recUrl && !existing?.receiptUrl) ? new Date().toISOString() : existing?.paymentDate,
                 isVerified: existing?.isVerified || false
             };
+
+            // Filtrar explícitamente undefined
+            const paymentData = { ...rawData } as ServicePayment;
+            Object.keys(paymentData).forEach(key => {
+                const k = key as keyof ServicePayment;
+                if (paymentData[k] === undefined) delete paymentData[k];
+            });
+
+            // Filtrar y eliminar explícitamente cualquier llave residual en 'undefined'
+            Object.keys(paymentData).forEach(key => {
+                const k = key as keyof ServicePayment;
+                if (paymentData[k] === undefined) delete paymentData[k];
+            });
 
             await propertyService.saveServicePayment(propertyId, service.id, paymentData);
             

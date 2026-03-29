@@ -81,14 +81,19 @@ export const propertyService = {
 
     // ---- PAGOS MENSUALES DE SERVICIOS ----
     async saveServicePayment(propertyId: string, serviceId: string, paymentData: ServicePayment): Promise<void> {
+        const payload = { ...paymentData } as any;
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === undefined) delete payload[key];
+        });
+
         const paymentsRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments`);
-        if (paymentData.id) {
+        if (payload.id) {
             // Actualizar existente
-            const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments/${paymentData.id}`);
-            await updateDoc(docRef, { ...paymentData });
+            const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments/${payload.id}`);
+            await updateDoc(docRef, payload);
         } else {
             // Crear nuevo
-            await addDoc(paymentsRef, paymentData);
+            await addDoc(paymentsRef, payload);
         }
     },
 
