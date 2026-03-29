@@ -13,6 +13,7 @@ import MessagesList from './pages/MessagesList';
 import CalendarView from './pages/CalendarView';
 import AdminCoupons from './pages/AdminCoupons';
 import UpgradePlan from './pages/UpgradePlan';
+import ServicePaymentsPage from './pages/ServicePaymentsPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -39,6 +40,7 @@ const AppRoutes: React.FC = () => {
         <Route path="properties/new" element={<PropertyForm />} />
         <Route path="properties/:id/edit" element={<PropertyForm />} />
         <Route path="properties/:id" element={<PropertyDetail />} />
+        <Route path="properties/:id/services/:serviceId" element={<ServicePaymentsPage />} />
         <Route path="admin/coupons" element={<AdminCoupons />} />
         <Route path="upgrade" element={<UpgradePlan />} />
         <Route path="rentals" element={<TenantProperties />} />

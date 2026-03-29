@@ -3,7 +3,7 @@ import { propertyService } from '../services/propertyService';
 import { uploadToCloudinary } from '../services/cloudinary';
 import type { PropertyService, ServiceFrequency, ServicePayment } from '../types';
 import { Plus, Trash2, Upload, ExternalLink, CheckCircle, Clock, Edit2, Save, FileText } from 'lucide-react';
-import ServicePaymentsModal from './ServicePaymentsModal';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
     propertyId: string;
@@ -22,8 +22,7 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
     const [newFrequency, setNewFrequency] = useState<ServiceFrequency>('Mensual');
     const [newDueDate, setNewDueDate] = useState<number | ''>(10);
 
-    // Estado del Modal de Historial
-    const [selectedService, setSelectedService] = useState<PropertyService | null>(null);
+    const navigate = useNavigate();
 
     // Estado de Edición Inline
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -261,8 +260,8 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                                                 <span style={{ fontSize: '1.1rem' }}>{srv.name}</span>
                                             )}
                                             
-                                            <button onClick={() => setSelectedService(srv)} className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.3rem 0.5rem', height: 'auto', backgroundColor: '#e8f0fe', color: '#1a73e8', border: '1px solid #1a73e8' }}>
-                                                <FileText size={14} /> Cargar Comprobantes
+                                            <button onClick={() => navigate(`/properties/${propertyId}/services/${srv.id}`, { state: { isTenantView } })} className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '0.4rem 0.6rem', height: 'auto', backgroundColor: '#e8f0fe', color: '#1a73e8', border: '1px solid #1a73e8' }}>
+                                                <FileText size={14} /> Historial y Comprobantes
                                             </button>
                                         </div>
                                     </td>
@@ -359,18 +358,6 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                 </div>
             )}
 
-            {/* Modal de Detalle de Pagos / Facturas */}
-            {selectedService && (
-                <ServicePaymentsModal 
-                    service={selectedService} 
-                    propertyId={propertyId} 
-                    isTenantView={isTenantView} 
-                    onClose={() => {
-                        setSelectedService(null);
-                        loadData(); // Refrescar grilla rápida de relojes
-                    }} 
-                />
-            )}
         </div>
     );
 };
