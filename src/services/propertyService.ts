@@ -1,6 +1,6 @@
-import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, collectionGroup } from 'firebase/firestore';
+import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, collectionGroup, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
-import type { Property, PropertyService, ServicePayment, RentalContract, PropertyExpense, RentPayment } from '../types';
+import type { Property, PropertyService, ServicePayment, RentalContract, PropertyExpense, RentPayment, ContractMessage } from '../types';
 
 const PROPERTIES_COLLECTION = 'properties';
 
@@ -193,5 +193,32 @@ export const propertyService = {
     async deleteRentPayment(propertyId: string, contractId: string, paymentId: string): Promise<void> {
         const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments/${paymentId}`);
         await deleteDoc(docRef);
+    },
+
+    // ==========================================
+    // MESSAGES
+    // ==========================================
+    subscribeToContractMessages(propertyId: string, contractId: string, callback: (messages: ContractMessage[]) => void) {
+        const q = query(
+            collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/messages`),
+            orderBy("createdAt", "asc")
+        );
+        return onSnapshot(q, (snapshot) => {
+            const msgs: ContractMessage[] = [];
+            snapshot.forEach(docSnap => {
+                msgs.push({ id: docSnap.id, ...docSnap.data() } as ContractMessage);
+            });
+            callback(msgs);
+        });
+    },
+
+    async sendContractMessage(propertyId: string, contractId: string, data: Omit<ContractMessage, 'id' | 'propertyId' | 'contractId' | 'createdAt'>): Promise<void> {
+        const msgRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/messages`);
+        await addDoc(msgRef, {
+            ...data,
+            propertyId,
+            contractId,
+            createdAt: new Date().toISOString()
+        });
     }
 };

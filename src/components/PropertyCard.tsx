@@ -1,14 +1,17 @@
 import React from 'react';
 import type { Property } from '../types';
-import { MapPin, Home, Key } from 'lucide-react';
+import { MapPin, Home, Key, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface PropertyCardProps {
     property: Property;
     hasActiveContract?: boolean;
+    currentRentAmount?: number;
+    rentCurrency?: 'USD' | 'ARS';
+    hasUnpaidServices?: boolean;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, hasActiveContract }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, hasActiveContract, currentRentAmount, rentCurrency, hasUnpaidServices }) => {
     const navigate = useNavigate();
 
     return (
@@ -57,10 +60,25 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, hasActiveContract
                 }}>
                     <Key size={14} />
                     {!property.isRented ? 'USO PERSONAL' : (hasActiveContract ? 'ALQUILADA' : 'DISPONIBLE PARA ALQUILAR')}
+                    {hasUnpaidServices && (
+                        <span title="¡Atención! Tienes uno o más servicios registrados para esta propiedad que ya vencieron en el mes actual." style={{ display: 'flex' }}>
+                            <AlertTriangle size={16} color="#d93025" />
+                        </span>
+                    )}
                 </span>
                 
-                <span style={{ fontSize: '1rem', fontWeight: 600, color: '#202124' }}>
-                    {property.currency} {property.estimatedValue?.toLocaleString()}
+                <span style={{ fontSize: '1rem', fontWeight: 600, color: '#202124', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    {hasActiveContract && currentRentAmount ? (
+                        <>
+                            <span style={{ fontSize: '0.7rem', color: '#5f6368', fontWeight: 500, lineHeight: 1 }}>Renta Mensual</span>
+                            <span>{rentCurrency} {currentRentAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                        </>
+                    ) : (
+                        <>
+                            <span style={{ fontSize: '0.7rem', color: '#5f6368', fontWeight: 500, lineHeight: 1 }}>Valor Venta Est.</span>
+                            <span>{property.currency} {property.estimatedValue?.toLocaleString()}</span>
+                        </>
+                    )}
                 </span>
             </div>
         </div>

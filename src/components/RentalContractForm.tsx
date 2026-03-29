@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { propertyService } from '../services/propertyService';
 import { indexService } from '../services/indexService';
 import type { RentalContract } from '../types';
-import { Save, Calendar } from 'lucide-react';
+import { Save, Calendar, StickyNote } from 'lucide-react';
 
 import RentPaymentsList from './RentPaymentsList';
+import ContractMessages from './ContractMessages';
 
 interface Props {
     propertyId: string;
@@ -30,7 +31,8 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
         updateIndex: 'ICL',
         startDate: '',
         endDate: '',
-        rentAmount: 0
+        rentAmount: 0,
+        notes: ''
     });
 
     const loadContract = async () => {
@@ -99,7 +101,8 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                 updateIndex: formData.updateIndex || 'Fijo',
                 tenantName: formData.tenantName || '',
                 tenantPhone: formData.tenantPhone || '',
-                tenantEmail: formData.tenantEmail || ''
+                tenantEmail: formData.tenantEmail || '',
+                notes: formData.notes || ''
             };
 
             if (contract && contract.id) {
@@ -126,7 +129,7 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
         try {
             await propertyService.updateRentalContract(propertyId, contract.id, { active: false });
             setContract(null);
-            setFormData({ currency: 'USD', updateFrequencyMonths: 6, updateIndex: 'ICL', startDate: '', endDate: '', rentAmount: 0, tenantName: '', tenantPhone: '', tenantEmail: '' });
+            setFormData({ currency: 'USD', updateFrequencyMonths: 6, updateIndex: 'ICL', startDate: '', endDate: '', rentAmount: 0, tenantName: '', tenantPhone: '', tenantEmail: '', notes: '' });
             await loadContract();
         } catch (err) {
             console.error(err);
@@ -261,6 +264,26 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                         </div>
                     </div>
 
+                    {!isTenantView && (
+                        <div style={{ marginBottom: '1.5rem', backgroundColor: '#fff8e1', padding: '1rem', borderRadius: '8px', border: '1px solid #fde293' }}>
+                            <label className="label" style={{ color: '#ea8600', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <StickyNote size={18} />
+                                Notas del Propietario (Privado)
+                            </label>
+                            <textarea
+                                className="input"
+                                rows={3}
+                                placeholder="Escribe anotaciones solo visibles para ti..."
+                                value={formData.notes || ''}
+                                onChange={e => handleChange('notes', e.target.value)}
+                                style={{ backgroundColor: '#fff', border: '1px solid #fde293', resize: 'vertical' }}
+                            ></textarea>
+                            <div style={{ fontSize: '0.75rem', color: '#ea8600', marginTop: '0.5rem' }}>
+                                El inquilino nunca verá este recuadro ni su contenido.
+                            </div>
+                        </div>
+                    )}
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
                         <div>
                             <label className="label">Valor Inicial Mensual</label>
@@ -351,11 +374,17 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
             )}
 
             {contract && contract.id && (
-                <RentPaymentsList 
-                    propertyId={propertyId} 
-                    contractId={contract.id} 
-                    isTenantView={isTenantView} 
-                />
+                <>
+                    <RentPaymentsList 
+                        propertyId={propertyId} 
+                        contractId={contract.id} 
+                        isTenantView={isTenantView} 
+                    />
+                    <ContractMessages 
+                        propertyId={propertyId} 
+                        contractId={contract.id} 
+                    />
+                </>
             )}
 
             {!isTenantView && allContracts.filter(c => c.id !== contract?.id).length > 0 && (

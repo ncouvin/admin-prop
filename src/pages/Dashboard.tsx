@@ -158,7 +158,7 @@ const Dashboard: React.FC = () => {
                             <BadgeDollarSign size={20} />
                             <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ingreso mensual alquileres en pesos</span>
                         </div>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>
+                        <div style={{ fontSize: '1.8rem', fontWeight: 600, margin: '0.4rem 0' }}>
                             $ {stats.totalArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                         </div>
                         <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>
@@ -174,7 +174,7 @@ const Dashboard: React.FC = () => {
                             <BadgeDollarSign size={20} />
                             <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ingreso mensual alquileres en dolares</span>
                         </div>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>
+                        <div style={{ fontSize: '1.8rem', fontWeight: 600, margin: '0.4rem 0' }}>
                             U$D {stats.totalUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                         </div>
                         <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>
@@ -190,7 +190,7 @@ const Dashboard: React.FC = () => {
                             <BadgeDollarSign size={20} />
                             <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Subtotal de ingreso mensual alquileres</span>
                         </div>
-                        <div style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0.5rem 0' }}>
+                        <div style={{ fontSize: '1.8rem', fontWeight: 600, margin: '0.4rem 0' }}>
                             $ {netIncomeArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                         </div>
                         <div style={{ fontSize: '0.85rem', opacity: 0.8, display: 'flex', justifyContent: 'space-between' }}>
@@ -211,7 +211,7 @@ const Dashboard: React.FC = () => {
                     </h3>
                     
                     <div style={{ fontSize: '0.95rem', color: '#5f6368', marginBottom: '0.2rem' }}>Valor de Mercado Estimado (USD)</div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#1a73e8', marginBottom: '1.5rem' }}>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 600, color: '#1a73e8', marginBottom: '1.5rem' }}>
                         U$D {stats.totalPatrimonioUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </div>
 

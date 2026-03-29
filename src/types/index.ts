@@ -35,7 +35,18 @@ export interface RentalContract {
     tenantName?: string;
     tenantEmail?: string;
     tenantPhone?: string;
+    notes?: string;
 }
+
+export interface ContractMessage {
+    id: string;
+    propertyId: string;
+    contractId: string;
+    text: string;
+    senderId: string; // auth uid
+    createdAt: string; // ISO string
+}
+
 
 // Qué servicios tiene enganchados esta propiedad.
 export type ServiceFrequency = 'Mensual' | 'Bimestral' | 'Trimestral' | 'Semestral' | 'Anual';

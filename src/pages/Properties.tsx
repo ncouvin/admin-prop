@@ -5,9 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import PropertyCard from '../components/PropertyCard';
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { indexService } from '../services/indexService';
 
 interface ExtendedProperty extends Property {
     hasActiveContract?: boolean;
+    currentRentAmount?: number;
+    rentCurrency?: 'USD' | 'ARS';
+    hasUnpaidServices?: boolean;
 }
 
 const Properties: React.FC = () => {
@@ -24,11 +28,56 @@ const Properties: React.FC = () => {
                     
                     const enriched = await Promise.all(data.map(async (p) => {
                         let hasContract = false;
+                        let currentRentAmount = 0;
+                        let rentCurrency: 'USD'|'ARS' = 'USD';
+                        let hasUnpaidServices = false;
+
                         if (p.isRented) {
                             const c = await propertyService.getActiveRentalContract(p.id);
-                            hasContract = !!c;
+                            if (c) {
+                                hasContract = true;
+                                currentRentAmount = c.rentAmount;
+                                rentCurrency = c.currency;
+
+                                if (c.updateIndex !== 'FIJO') {
+                                    const start = new Date(c.startDate);
+                                    const today = new Date();
+                                    let m = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+                                    if (today.getDate() < start.getDate()) m--;
+                                    if (m < 0) m = 0;
+                                    
+                                    const pPassed = Math.floor(m / c.updateFrequencyMonths);
+                                    if (pPassed > 0) {
+                                        const nextUpdate = new Date(start);
+                                        nextUpdate.setMonth(start.getMonth() + pPassed * c.updateFrequencyMonths);
+                                        try {
+                                            const res = await indexService.calculateAccumulatedIndex(start, nextUpdate);
+                                            currentRentAmount = currentRentAmount * (1 + (res.accumulatedPercent / 100));
+                                        } catch(e) {}
+                                    }
+                                }
+                            }
                         }
-                        return { ...p, hasActiveContract: hasContract };
+
+                        // Chequeo de Servicios Impagos Vencidos
+                        const services = await propertyService.getPropertyServices(p.id);
+                        const curYear = new Date().getFullYear();
+                        const curMonth = new Date().getMonth() + 1; // 1-12
+                        const curDate = new Date().getDate();
+
+                        for (const s of services) {
+                            if (s.estimatedDueDate && curDate > s.estimatedDueDate) {
+                                const payments = await propertyService.getServicePayments(p.id, s.id, curYear);
+                                const currentPayment = payments.find(pay => pay.month === curMonth);
+                                // Si no hay pago cargado, o está pendiente sin siquiera un comprobante subido
+                                if (!currentPayment || (currentPayment.status === 'pending' && !currentPayment.receiptUrl)) {
+                                    hasUnpaidServices = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        return { ...p, hasActiveContract: hasContract, currentRentAmount, rentCurrency, hasUnpaidServices };
                     }));
                     setProperties(enriched);
                 } catch (error) {
@@ -68,7 +117,14 @@ const Properties: React.FC = () => {
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                     {properties.map(prop => (
-                        <PropertyCard key={prop.id} property={prop} hasActiveContract={prop.hasActiveContract} />
+                        <PropertyCard 
+                            key={prop.id} 
+                            property={prop} 
+                            hasActiveContract={prop.hasActiveContract} 
+                            currentRentAmount={prop.currentRentAmount}
+                            rentCurrency={prop.rentCurrency}
+                            hasUnpaidServices={prop.hasUnpaidServices}
+                        />
                     ))}
                 </div>
             )}
