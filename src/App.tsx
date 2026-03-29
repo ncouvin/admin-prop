@@ -9,6 +9,8 @@ import PropertyForm from './pages/PropertyForm';
 import PropertyDetail from './pages/PropertyDetail';
 import TenantProperties from './pages/TenantProperties';
 import AlertsList from './pages/AlertsList';
+import MessagesList from './pages/MessagesList';
+import CalendarView from './pages/CalendarView';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -37,9 +39,9 @@ const AppRoutes: React.FC = () => {
         <Route path="properties/:id" element={<PropertyDetail />} />
         <Route path="rentals" element={<TenantProperties />} />
         <Route path="alerts" element={<AlertsList />} />
-        <Route path="calendar" element={<div>Calendario (WIP)</div>} />
+        <Route path="calendar" element={<CalendarView />} />
         <Route path="finances" element={<div>Finanzas (WIP)</div>} />
-        <Route path="messages" element={<div>Mensajes (WIP)</div>} />
+        <Route path="messages" element={<MessagesList />} />
         <Route path="settings" element={<div>Configuración (WIP)</div>} />
         <Route path="users" element={<div>Usuarios (WIP)</div>} />
       </Route>

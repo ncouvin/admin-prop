@@ -81,6 +81,7 @@ const PropertyForm: React.FC = () => {
             } else {
                 const newProperty: Omit<Property, 'id'> = {
                     ownerId: user.id,
+                    coOwnerIds: [],
                     name: formData.name || '',
                     address: formData.address || '',
                     type: formData.type || 'apartment',

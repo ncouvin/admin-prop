@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { propertyService } from '../services/propertyService';
 import type { Property, RentalContract } from '../types';
-import { Home, FileText, BadgeDollarSign, Building, Wrench } from 'lucide-react';
+import { Home, FileText, BadgeDollarSign, Building, Wrench, Link as LinkIcon } from 'lucide-react';
 import { indexService } from '../services/indexService';
 import { exchangeService } from '../services/exchangeService';
 
@@ -128,6 +128,22 @@ const Dashboard: React.FC = () => {
         fetchDashboardData();
     }, [user]);
 
+    const handleLinkCoOwner = async () => {
+        const code = window.prompt("Ingresa el ID de Propiedad para vincularte como Copropietario/Socio:");
+        if (!code || !code.trim()) return;
+        try {
+            const success = await propertyService.linkCoOwnerToProperty(code.trim(), user!.id);
+            if (success) {
+                alert("¡Propiedad vinculada exitosamente! Ahora tienes permisos sobre ella.");
+                window.location.reload();
+            } else {
+                alert("Propiedad no encontrada o vinculación fallida.");
+            }
+        } catch(e) {
+            alert("Error al intentar vincular la propiedad.");
+        }
+    };
+
     if (loading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
@@ -157,6 +173,9 @@ const Dashboard: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
                         <button className="btn btn-primary" onClick={() => window.location.href = '/properties/new'} style={{ width: '100%', maxWidth: '300px' }}>
                             + Alta de Nueva Propiedad
+                        </button>
+                        <button className="btn btn-secondary" onClick={handleLinkCoOwner} style={{ width: '100%', maxWidth: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                            <LinkIcon size={18} /> ¿Soy Copropietario? Vincular
                         </button>
                         <button className="btn btn-secondary" onClick={() => window.location.href = '/rentals'} style={{ width: '100%', maxWidth: '300px' }}>
                             Soy Inquilino / Ver mis Alquileres

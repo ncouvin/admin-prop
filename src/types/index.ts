@@ -9,6 +9,8 @@ export type PropertyType = 'apartment' | 'house' | 'garage' | 'store' | 'warehou
 export interface Property {
     id: string; // Generado automáticamente (UUID o Firebase Doc ID)
     ownerId: string; // Ref a User.id
+    coOwnerIds?: string[]; // Referencias a usuarios que actúan como copropietarios
+    transferControlRequestTo?: string | null; // ID al que invitarán control total (null al no haber)
     name: string; // Ej: "Depto Mar del Plata"
     address: string; // Dirección completa
     type: PropertyType;
@@ -35,6 +37,7 @@ export interface RentalContract {
     tenantName?: string;
     tenantEmail?: string;
     tenantPhone?: string;
+    paymentDay?: string; // Ej: "10"
     notes?: string;
 }
 

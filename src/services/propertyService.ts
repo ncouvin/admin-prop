@@ -1,4 +1,4 @@
-import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, collectionGroup, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, query, where, collectionGroup, orderBy, onSnapshot, or } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Property, PropertyService, ServicePayment, RentalContract, PropertyExpense, RentPayment, ContractMessage } from '../types';
 
@@ -14,7 +14,10 @@ export const propertyService = {
     async getPropertiesByOwner(ownerId: string): Promise<Property[]> {
         const q = query(
             collection(db, PROPERTIES_COLLECTION),
-            where("ownerId", "==", ownerId)
+            or(
+                where("ownerId", "==", ownerId),
+                where("coOwnerIds", "array-contains", ownerId)
+            )
         );
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => ({
@@ -150,6 +153,32 @@ export const propertyService = {
         return false;
     },
 
+    async linkCoOwnerToProperty(propertyId: string, coOwnerId: string): Promise<boolean> {
+        const p = await this.getProperty(propertyId);
+        if (!p) return false;
+        if (p.ownerId === coOwnerId) return true; // Already owner
+        const currentCoOwners = p.coOwnerIds || [];
+        if (currentCoOwners.includes(coOwnerId)) return true; // Already joined
+        
+        await updateDoc(doc(db, PROPERTIES_COLLECTION, propertyId), {
+            coOwnerIds: [...currentCoOwners, coOwnerId]
+        });
+        return true;
+    },
+
+    async transferPropertyControl(propertyId: string, currentOwnerId: string, newOwnerId: string): Promise<void> {
+        const p = await this.getProperty(propertyId);
+        if (!p) return;
+        const newCoOwners = (p.coOwnerIds || []).filter(id => id !== newOwnerId);
+        newCoOwners.push(currentOwnerId); // Old owner becomes co-owner
+
+        await updateDoc(doc(db, PROPERTIES_COLLECTION, propertyId), {
+            ownerId: newOwnerId,
+            coOwnerIds: newCoOwners,
+            transferControlRequestTo: null
+        });
+    },
+
     // ---- GASTOS Y ARREGLOS ----
     async addExpense(propertyId: string, expenseData: Omit<PropertyExpense, 'id' | 'propertyId'>): Promise<string> {
         const docRef = await addDoc(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses`), {
@@ -220,5 +249,35 @@ export const propertyService = {
             contractId,
             createdAt: new Date().toISOString()
         });
+    },
+
+    async getUserContractsWithChats(userId: string): Promise<{ property: Property, contract: RentalContract, lastMessage?: ContractMessage }[]> {
+        const owned = await this.getPropertiesByOwner(userId);
+        const rented = await this.getRentingProperties(userId);
+        
+        const allPropsMap = new Map<string, Property>();
+        owned.forEach(p => allPropsMap.set(p.id, p));
+        rented.forEach(p => allPropsMap.set(p.id, p));
+        
+        const allProps = Array.from(allPropsMap.values());
+        const results = [];
+        
+        for (const prop of allProps) {
+            const contract = await this.getActiveRentalContract(prop.id);
+            if (contract) {
+                const qMsg = query(
+                    collection(db, `${PROPERTIES_COLLECTION}/${prop.id}/contracts/${contract.id}/messages`),
+                    orderBy("createdAt", "asc")
+                );
+                const msgSnap = await getDocs(qMsg);
+                let lastMessage: ContractMessage | undefined;
+                if (!msgSnap.empty) {
+                    lastMessage = { id: msgSnap.docs[msgSnap.docs.length - 1].id, ...msgSnap.docs[msgSnap.docs.length - 1].data() } as ContractMessage;
+                }
+                results.push({ property: prop, contract, lastMessage });
+            }
+        }
+        
+        return results;
     }
 };

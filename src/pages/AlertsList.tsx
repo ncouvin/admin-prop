@@ -18,21 +18,31 @@ const AlertsList: React.FC = () => {
     const [alerts, setAlerts] = useState<SystemAlert[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const getMonthName = (month: number) => {
+        const names = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        return names[month - 1];
+    };
+
     useEffect(() => {
         const buildAlerts = async () => {
             if (!user) return;
             try {
-                const props = await propertyService.getPropertiesByOwner(user.id);
                 const newAlerts: SystemAlert[] = [];
                 const today = new Date();
+                const curMonth = today.getMonth() + 1;
+                const curYear = today.getFullYear();
+                const curDate = today.getDate();
 
-                for (const property of props) {
+                // ============================================
+                // ALERTAS DE PROPIETARIO / CO-PROPIETARIO
+                // ============================================
+                const ownerProps = await propertyService.getPropertiesByOwner(user.id);
+                for (const property of ownerProps) {
                     if (!property.isRented) continue;
 
                     const activeContract = await propertyService.getActiveRentalContract(property.id);
                     if (!activeContract) continue;
 
-                    // 1. Chequeo de vencimiento de contrato
                     const endDate = new Date(activeContract.endDate);
                     const diffTime = endDate.getTime() - today.getTime();
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -42,7 +52,7 @@ const AlertsList: React.FC = () => {
                             id: `exp-${property.id}`,
                             type: 'critical',
                             title: `Contrato Vencido: ${property.name}`,
-                            description: `El contrato finalizó hace ${Math.abs(diffDays)} días. Debes renovarlo o crear uno nuevo.`,
+                            description: `Finalizó hace ${Math.abs(diffDays)} días. Debes renovarlo o crear uno nuevo.`,
                             actionLink: `/properties/${property.id}`,
                             date: endDate
                         });
@@ -51,7 +61,7 @@ const AlertsList: React.FC = () => {
                             id: `exp30-${property.id}`,
                             type: 'critical',
                             title: `Vencimiento Inminente: ${property.name}`,
-                            description: `El contrato caduca en ${diffDays} días (${endDate.toLocaleDateString()}).`,
+                            description: `Caduca en ${diffDays} días (${endDate.toLocaleDateString()}).`,
                             actionLink: `/properties/${property.id}`,
                             date: endDate
                         });
@@ -66,7 +76,6 @@ const AlertsList: React.FC = () => {
                         });
                     }
 
-                    // 2. Chequeo de actualización por inflación
                     if (activeContract.updateIndex !== 'FIJO') {
                         const start = new Date(activeContract.startDate);
                         let monthsPassed = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
@@ -85,7 +94,7 @@ const AlertsList: React.FC = () => {
                                 id: `upd-${property.id}`,
                                 type: 'info',
                                 title: `Ajuste de Alquiler: ${property.name}`,
-                                description: `Toca aplicar índice ${activeContract.updateIndex} en ${updateDiffDays} días (Vigencia: ${nextUpdateDate.toLocaleDateString()}). Envía el aviso al inquilino.`,
+                                description: `Toca aplicar índice en ${updateDiffDays} días (Vigencia: ${nextUpdateDate.toLocaleDateString()}).`,
                                 actionLink: `/properties/${property.id}`,
                                 date: nextUpdateDate
                             });
@@ -93,12 +102,75 @@ const AlertsList: React.FC = () => {
                     }
                 }
 
-                // Ordenar por severidad y cercanía en el tiempo
+                // ============================================
+                // ALERTAS DE INQUILINO
+                // ============================================
+                const rentedProps = await propertyService.getRentingProperties(user.id);
+                for (const property of rentedProps) {
+                    const activeContract = await propertyService.getActiveRentalContract(property.id);
+                    if (!activeContract) continue;
+
+                    // 1. Alquiler Impago (Check mes actual)
+                    const rentDateInt = parseInt(activeContract.paymentDay || '10');
+                    if (curDate > rentDateInt) {
+                        const payments = await propertyService.getRentPayments(property.id, activeContract.id!);
+                        const pThisMonth = payments.find(p => p.month === curMonth && p.year === curYear);
+                        if (!pThisMonth || (!pThisMonth.isVerified && !pThisMonth.receiptUrl)) {
+                            newAlerts.push({
+                                id: `tenant-rent-${property.id}`,
+                                type: 'critical',
+                                title: `Alquiler Vencido: ${property.name}`,
+                                description: `El periodo de ${getMonthName(curMonth)} está impago o pendiente de subir comprobante.`,
+                                actionLink: `/rentals`,
+                                date: today
+                            });
+                        }
+                    }
+
+                    // 2. Servicios Impagos
+                    const services = await propertyService.getPropertyServices(property.id);
+                    for (const s of services) {
+                        if (s.estimatedDueDate && curDate > s.estimatedDueDate) {
+                            const payments = await propertyService.getServicePayments(property.id, s.id, curYear);
+                            const currentPayment = payments.find(pay => pay.month === curMonth);
+                            if (!currentPayment || (currentPayment.status === 'pending' && !currentPayment.receiptUrl)) {
+                                newAlerts.push({
+                                    id: `tenant-svc-${s.id}`,
+                                    type: 'warning',
+                                    title: `Servicio Vencido: ${s.name}`,
+                                    description: `El servicio en ${property.name} venció el ${s.estimatedDueDate} de este mes. Si ya lo pagaste sube el comprobante.`,
+                                    actionLink: `/rentals`,
+                                    date: today
+                                });
+                            }
+                        }
+                    }
+
+                    // 3. Aumento el mes que viene
+                    if (activeContract.updateIndex !== 'FIJO') {
+                        const start = new Date(activeContract.startDate);
+                        let monthsPassedMap = (curYear - start.getFullYear()) * 12 + (curMonth - start.getMonth());
+                        // Ver si el mes que viene hay salto de periodo
+                        const currentPeriod = Math.floor(monthsPassedMap / activeContract.updateFrequencyMonths);
+                        const nextMonthPeriod = Math.floor((monthsPassedMap + 1) / activeContract.updateFrequencyMonths);
+                        
+                        if (nextMonthPeriod > currentPeriod) {
+                            newAlerts.push({
+                                id: `tenant-upd-${property.id}`,
+                                type: 'info',
+                                title: `Próximo Aumento de Alquiler`,
+                                description: `El mes que viene toca actualizar el alquiler debido a tu cláusula ${activeContract.updateIndex}. Habla con tu propietario.`,
+                                actionLink: `/rentals`,
+                                date: today
+                            });
+                        }
+                    }
+                }
+
+                // Ordenar por severidad
                 const typeWeight = { critical: 3, warning: 2, info: 1 };
                 newAlerts.sort((a, b) => {
-                    if (typeWeight[b.type] !== typeWeight[a.type]) {
-                        return typeWeight[b.type] - typeWeight[a.type];
-                    }
+                    if (typeWeight[b.type] !== typeWeight[a.type]) return typeWeight[b.type] - typeWeight[a.type];
                     return a.date.getTime() - b.date.getTime();
                 });
 
@@ -116,7 +188,7 @@ const AlertsList: React.FC = () => {
     if (loading) {
         return (
             <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <div style={{ color: '#5f6368', animation: 'pulse 2s infinite' }}>Auditando propiedades...</div>
+                <div style={{ color: '#5f6368', animation: 'pulse 2s infinite' }}>Auditando propiedades y alquileres...</div>
             </div>
         );
     }
@@ -127,17 +199,8 @@ const AlertsList: React.FC = () => {
         return <Info size={24} color="#1a73e8" />;
     };
 
-    const alertBg = {
-        critical: '#fce8e6',
-        warning: '#fef7e0',
-        info: '#e8f0fe'
-    };
-
-    const alertBorder = {
-        critical: '1px solid #fad2cf',
-        warning: '1px solid #fce8b2',
-        info: '1px solid #d2e3fc'
-    };
+    const alertBg = { critical: '#fce8e6', warning: '#fef7e0', info: '#e8f0fe' };
+    const alertBorder = { critical: '1px solid #fad2cf', warning: '1px solid #fce8b2', info: '1px solid #d2e3fc' };
 
     return (
         <div className="fade-in">
@@ -152,7 +215,7 @@ const AlertsList: React.FC = () => {
                 <div className="card" style={{ textAlign: 'center', padding: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                     <CheckCircle2 size={48} color="#188038" style={{ opacity: 0.8 }} />
                     <h3 style={{ fontSize: '1.2rem', color: '#188038' }}>Todo está bajo control</h3>
-                    <p style={{ color: '#5f6368', maxWidth: '400px' }}>No tienes contratos próximos a vencer ni ajustes de inflación que realizar este mes. ¡Relájate!</p>
+                    <p style={{ color: '#5f6368', maxWidth: '400px' }}>No hay acciones críticas requeridas ni notificaciones urgentes en este momento. ¡Buen trabajo!</p>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

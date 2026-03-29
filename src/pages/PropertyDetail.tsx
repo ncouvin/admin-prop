@@ -48,27 +48,75 @@ const PropertyDetail: React.FC = () => {
 
     if (!property) return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando detalles...</div>;
     
-    const isTenantView = property.ownerId !== user?.id;
+    const isMasterOwner = property.ownerId === user?.id;
+    const isCoOwner = property.coOwnerIds?.includes(user?.id || '');
+    const isTenantView = !isMasterOwner && !isCoOwner;
+
+    const handleRequestControl = async () => {
+        if (window.confirm('¿Solicitar el control total de esta propiedad al dueño actual?')) {
+            await propertyService.updateProperty(property.id, { transferControlRequestTo: user?.id });
+            alert('Solicitud enviada al propietario principal.');
+            window.location.reload();
+        }
+    };
+
+    const handleAcceptControl = async () => {
+        if (!property.transferControlRequestTo) return;
+        if (window.confirm('¿Estás seguro de ceder el control total? Pasarás a ser un copropietario ordinario y no podrás eliminar o editar la estructura de la propiedad.')) {
+            await propertyService.transferPropertyControl(property.id, property.ownerId, property.transferControlRequestTo);
+            alert('Control transferido exitosamente.');
+            navigate('/dashboard');
+        }
+    };
+
+    const handleRejectControl = async () => {
+        await propertyService.updateProperty(property.id, { transferControlRequestTo: null });
+        window.location.reload();
+    };
 
     return (
         <div className="container fade-in">
+            {isMasterOwner && property.transferControlRequestTo && (
+                <div style={{ backgroundColor: '#fce8e6', border: '1px solid #fad2cf', color: '#c5221f', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>🛑 Un Copropietario ha solicitado el Control Total de la propiedad.</div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-secondary" onClick={handleRejectControl}>Rechazar</button>
+                        <button className="btn btn-primary" onClick={handleAcceptControl} style={{ backgroundColor: '#c5221f', borderColor: '#c5221f' }}>Ceder Control</button>
+                    </div>
+                </div>
+            )}
+
             <div className="header-actions">
                 <button className="btn btn-secondary" onClick={() => navigate(-1)}>
                     <ArrowLeft size={20} />
                     Volver
                 </button>
-                {!isTenantView && (
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn btn-secondary" onClick={() => navigate(`/properties/${id}/edit`)}>
-                            <Edit size={20} />
-                            Editar Propiedad
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    {isCoOwner && (
+                        <button className="btn btn-secondary" onClick={handleRequestControl} disabled={!!property.transferControlRequestTo}>
+                            <Key size={20} />
+                            {property.transferControlRequestTo === user?.id ? 'Solicitud Enviada' : 'Solicitar Traspaso Total'}
                         </button>
-                        <button className="btn btn-danger" onClick={handleDelete} style={{ color: 'red' }}>
-                            <Trash2 size={20} />
-                            Eliminar Propiedad
-                        </button>
-                    </div>
-                )}
+                    )}
+                    {isMasterOwner && (
+                        <>
+                            <button className="btn btn-secondary" onClick={() => {
+                                alert(`ID para Compartir (Copropietarios):\n\n${property.id}\n\nPueden ingresarlo desde el Dashboard en el botón vincular.`);
+                            }}>
+                                <Key size={20} />
+                                ID Compartir
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => navigate(`/properties/${id}/edit`)}>
+                                <Edit size={20} />
+                                Editar Proyecto
+                            </button>
+                            <button className="btn btn-danger" onClick={handleDelete} style={{ color: 'red' }}>
+                                <Trash2 size={20} />
+                                Eliminar
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
             <div className="card" style={{ marginBottom: '2rem', backgroundColor: '#fff', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
