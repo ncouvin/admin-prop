@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { propertyService } from '../services/propertyService';
+import { indexService } from '../services/indexService';
 import type { RentalContract } from '../types';
 import { Save, Calendar } from 'lucide-react';
 
@@ -12,6 +13,10 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [accumulatedIndex, setAccumulatedIndex] = useState<number>(0);
+    
+    // Estados para la proyeccion autogenerada (Versión C)
+    const [isEstimatedText, setIsEstimatedText] = useState(false);
+    const [isAutoCalculating, setIsAutoCalculating] = useState(false);
 
     const [formData, setFormData] = useState<Partial<RentalContract>>({
         currency: 'USD',
@@ -29,6 +34,31 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
             if (active) {
                 setContract(active);
                 setFormData(active);
+                
+                if (active.updateIndex !== 'FIJO') {
+                    // Start auto-calculating as requested in version c
+                    setIsAutoCalculating(true);
+                    try {
+                        // The target date is the next actual update date
+                        const start = new Date(active.startDate);
+                        const today = new Date();
+                        let m = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+                        if (today.getDate() < start.getDate()) m--;
+                        if (m < 0) m = 0;
+                        const pPassed = Math.floor(m / active.updateFrequencyMonths);
+                        const nextUpdate = new Date(start);
+                        nextUpdate.setMonth(start.getMonth() + (pPassed + 1) * active.updateFrequencyMonths);
+                        
+                        // We ask the indexService to calculate from start up to nextUpdate
+                        const indexStatus = await indexService.calculateAccumulatedIndex(start, nextUpdate);
+                        setAccumulatedIndex(indexStatus.accumulatedPercent);
+                        setIsEstimatedText(indexStatus.isEstimated);
+                    } catch (err) {
+                        console.error("Auto calculation failed", err);
+                    } finally {
+                        setIsAutoCalculating(false);
+                    }
+                }
             }
         } catch (error) {
             console.error("Error loading contract", error);
@@ -133,11 +163,12 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
                             </div>
                         </div>
                         <div>
-                            <div style={{ fontSize: '0.85rem', color: '#5f6368' }}>
-                                Valor Actualizado ({contract.currency})
+                            <div style={{ fontSize: '0.85rem', color: '#5f6368', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                Valor Proyectado ({contract.currency}) 
+                                {!statusObj.isFixed && isEstimatedText && <span style={{ color: '#ea8600', fontSize: '0.75rem', fontWeight: 'bold' }}>(Estimativo)</span>}
                             </div>
                             <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1a73e8' }}>
-                                {contract.currency} {statusObj.currentAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                {isAutoCalculating ? 'Calculando...' : `${contract.currency} ${statusObj.currentAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
                             </div>
                         </div>
                     </div>
@@ -145,15 +176,18 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
                     {!statusObj.isFixed && (
                         <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <label style={{ fontSize: '0.9rem', color: '#3c4043', fontWeight: 500 }}>
-                                Simular ajuste estimado ({contract.updateIndex}):
+                                Índice auto-proyectado de ajuste ({contract.updateIndex}):
                             </label>
                             <input 
                                 type="number" 
                                 className="input" 
                                 style={{ width: '80px', padding: '0.25rem 0.5rem', height: 'auto' }}
-                                value={accumulatedIndex}
-                                onChange={e => setAccumulatedIndex(parseFloat(e.target.value) || 0)}
-                                placeholder="Ej: 15"
+                                value={accumulatedIndex.toFixed(2)}
+                                onChange={e => {
+                                   setIsEstimatedText(false); // They overrode it manually
+                                   setAccumulatedIndex(parseFloat(e.target.value) || 0)
+                                }}
+                                disabled={isAutoCalculating}
                             />
                             <span style={{ color: '#5f6368', fontSize: '0.9rem' }}>% acumulado</span>
                         </div>
