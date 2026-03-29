@@ -56,11 +56,18 @@ const Layout: React.FC = () => {
                 height: '100vh',
                 zIndex: 10
             }}>
-                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                        <img src="/logo.png" alt="Admin Prop Logo" style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '4px' }} onError={(e) => { e.currentTarget.style.display = 'none' }} />
-                        <h1 style={{ fontSize: '1.25rem', color: 'var(--color-primary)', margin: 0 }}>Admin Prop</h1>
-                    </div>
+                <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                    <img 
+                        src="/logo.png" 
+                        alt="Admin Prop Logo" 
+                        style={{ width: '160px', height: 'auto', objectFit: 'contain', marginBottom: '0.5rem' }} 
+                        onError={(e) => { 
+                            e.currentTarget.style.display = 'none';
+                            const fallback = document.getElementById('logo-fallback-title');
+                            if (fallback) fallback.style.display = 'block';
+                        }} 
+                    />
+                    <h1 id="logo-fallback-title" style={{ fontSize: '1.25rem', color: 'var(--color-primary)', margin: 0, display: 'none' }}>Admin Prop</h1>
                     <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: 0 }}>{user?.name}</p>
                 </div>
 
