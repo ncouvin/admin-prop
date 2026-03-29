@@ -32,7 +32,7 @@ export const propertyService = {
             where("tenantId", "==", tenantId)
         );
         const snp = await getDocs(q);
-        return snp.docs.map(doc => ({ id: doc.id, ...doc.data() } as Property));
+        return snp.docs.map(doc => ({ ...doc.data(), id: doc.id } as Property));
     },
 
     async getProperty(id: string): Promise<Property | null> {
@@ -40,7 +40,7 @@ export const propertyService = {
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() } as Property;
+            return { ...docSnap.data(), id: docSnap.id } as Property;
         }
         return null;
     },
@@ -66,7 +66,7 @@ export const propertyService = {
     async getPropertyServices(propertyId: string): Promise<PropertyService[]> {
         const servicesRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/services`);
         const snapshot = await getDocs(servicesRef);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PropertyService));
+        return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PropertyService));
     },
 
     async updateService(propertyId: string, serviceId: string, serviceData: Partial<PropertyService>): Promise<void> {
@@ -82,14 +82,16 @@ export const propertyService = {
     // ---- PAGOS MENSUALES DE SERVICIOS ----
     async saveServicePayment(propertyId: string, serviceId: string, paymentData: ServicePayment): Promise<void> {
         const payload = { ...paymentData } as any;
+        if (!payload.id) delete payload.id; // delete empty strings
+
         Object.keys(payload).forEach(key => {
             if (payload[key] === undefined) delete payload[key];
         });
 
         const paymentsRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments`);
-        if (payload.id) {
+        if (paymentData.id) {
             // Actualizar existente
-            const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments/${payload.id}`);
+            const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments/${paymentData.id}`);
             await updateDoc(docRef, payload);
         } else {
             // Crear nuevo
@@ -101,7 +103,7 @@ export const propertyService = {
         const paymentsRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/services/${serviceId}/payments`);
         const q = query(paymentsRef, where("year", "==", year));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServicePayment));
+        return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ServicePayment));
     },
 
     async deleteServicePayment(propertyId: string, serviceId: string, paymentId: string): Promise<void> {
@@ -121,7 +123,7 @@ export const propertyService = {
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
             const doc = snapshot.docs[0];
-            return { id: doc.id, ...doc.data() } as unknown as RentalContract;
+            return { ...doc.data(), id: doc.id } as unknown as RentalContract;
         }
         return null;
     },
@@ -134,7 +136,7 @@ export const propertyService = {
     async getAllRentalContracts(propertyId: string): Promise<RentalContract[]> {
         const contractsRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts`);
         const snapshot = await getDocs(contractsRef);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as RentalContract));
+        return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as unknown as RentalContract));
     },
 
     async linkTenantToContract(contractId: string, tenantId: string): Promise<boolean> {
