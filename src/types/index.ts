@@ -31,6 +31,10 @@ export interface RentalContract {
     endDate: string; // YYYY-MM-DD
     updateFrequencyMonths: number; // Ej: cada 3, 6, 12 meses
     updateIndex: string; // Ej: "ICL", "IPC", "Fijo"
+    active?: boolean;
+    tenantName?: string;
+    tenantEmail?: string;
+    tenantPhone?: string;
 }
 
 // Qué servicios tiene enganchados esta propiedad.

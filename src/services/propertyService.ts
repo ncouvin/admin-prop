@@ -113,6 +113,17 @@ export const propertyService = {
         return null;
     },
 
+    async updateRentalContract(propertyId: string, contractId: string, data: Partial<RentalContract>): Promise<void> {
+        const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}`);
+        await updateDoc(docRef, data);
+    },
+
+    async getAllRentalContracts(propertyId: string): Promise<RentalContract[]> {
+        const contractsRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts`);
+        const snapshot = await getDocs(contractsRef);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as RentalContract));
+    },
+
     async linkTenantToContract(contractId: string, tenantId: string): Promise<boolean> {
         // En Firestore nativo no es fácil buscar documentos subcolección por ID global 
         // sin CollectionGroup queries, hacemos CollectionGroup

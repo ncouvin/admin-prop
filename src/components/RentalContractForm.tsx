@@ -21,6 +21,9 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
     const [isEstimatedText, setIsEstimatedText] = useState(false);
     const [isAutoCalculating, setIsAutoCalculating] = useState(false);
 
+    const [allContracts, setAllContracts] = useState<RentalContract[]>([]);
+    const [viewingOldContractId, setViewingOldContractId] = useState<string | null>(null);
+
     const [formData, setFormData] = useState<Partial<RentalContract>>({
         currency: 'USD',
         updateFrequencyMonths: "6" as any,
@@ -62,7 +65,12 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                         setIsAutoCalculating(false);
                     }
                 }
+            } else {
+                setContract(null); // Explicit reset if no active found
             }
+
+            const all = await propertyService.getAllRentalContracts(propertyId);
+            setAllContracts(all);
         } catch (error) {
             console.error("Error loading contract", error);
         } finally {
@@ -82,21 +90,47 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
         e.preventDefault();
         setSaving(true);
         try {
-            const contractData: Omit<RentalContract, 'propertyId'> = {
+            const contractData: Partial<RentalContract> = {
                 rentAmount: formData.rentAmount || 0,
                 currency: formData.currency || 'USD',
                 startDate: formData.startDate || '',
                 endDate: formData.endDate || '',
                 updateFrequencyMonths: Number(formData.updateFrequencyMonths) || 12,
-                updateIndex: formData.updateIndex || 'Fijo'
+                updateIndex: formData.updateIndex || 'Fijo',
+                tenantName: formData.tenantName || '',
+                tenantPhone: formData.tenantPhone || '',
+                tenantEmail: formData.tenantEmail || ''
             };
 
-            await propertyService.saveRentalContract(propertyId, contractData);
-            alert("Contrato guardado exitosamente");
+            if (contract && contract.id) {
+                await propertyService.updateRentalContract(propertyId, contract.id, contractData);
+                alert("Cambios guardados exitosamente en el contrato vigente.");
+            } else {
+                await propertyService.saveRentalContract(propertyId, contractData as Omit<RentalContract, 'propertyId'>);
+                alert("Nuevo alquiler activado exitosamente.");
+            }
             await loadContract();
         } catch (error) {
             console.error("Error saving contract", error);
             alert("Error al guardar el contrato.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleArchive = async () => {
+        if (!contract || !contract.id) return;
+        if (!window.confirm("¿Seguro que deseas dar de baja este contrato?\nPasará al historial antiguo, dejando el espacio libre para cargar un nuevo alquiler.")) return;
+        
+        setSaving(true);
+        try {
+            await propertyService.updateRentalContract(propertyId, contract.id, { active: false });
+            setContract(null);
+            setFormData({ currency: 'USD', updateFrequencyMonths: 6, updateIndex: 'ICL', startDate: '', endDate: '', rentAmount: 0, tenantName: '', tenantPhone: '', tenantEmail: '' });
+            await loadContract();
+        } catch (err) {
+            console.error(err);
+            alert("Error al archivar.");
         } finally {
             setSaving(false);
         }
@@ -214,6 +248,21 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                 <form onSubmit={handleSave}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
                         <div>
+                            <label className="label" style={{ color: '#1a73e8' }}>Nombre y Apellido (Inquilino)</label>
+                            <input type="text" className="input" placeholder="Nombre completo..." value={formData.tenantName || ''} onChange={e => handleChange('tenantName', e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="label" style={{ color: '#1a73e8' }}>Teléfono / WhatsApp</label>
+                            <input type="text" className="input" placeholder="Ej: +54 9 11..." value={formData.tenantPhone || ''} onChange={e => handleChange('tenantPhone', e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="label" style={{ color: '#1a73e8' }}>Email Secundario</label>
+                            <input type="email" className="input" placeholder="correo@ejemplo.com" value={formData.tenantEmail || ''} onChange={e => handleChange('tenantEmail', e.target.value)} />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                        <div>
                             <label className="label">Valor Inicial Mensual</label>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                            <select 
@@ -286,10 +335,16 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid #eee', paddingTop: '1.5rem' }}>
+                    {contract ? (
+                        <button type="button" onClick={handleArchive} className="btn btn-secondary" style={{ backgroundColor: '#fce8e6', color: '#d93025', borderColor: '#fce8e6' }} disabled={saving}>
+                            Finalizar y Archivar Contrato
+                        </button>
+                    ) : <div></div>}
+
                     <button type="submit" className="btn btn-primary" disabled={saving}>
                         <Save size={18} />
-                        {saving ? 'Guardando...' : (contract ? 'Renovar / Pisar Contrato' : 'Activar Alquiler')}
+                        {saving ? 'Guardando...' : (contract ? 'Guardar Cambios Editados' : 'Activar Nuevo Alquiler')}
                     </button>
                 </div>
             </form>
@@ -301,6 +356,45 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                     contractId={contract.id} 
                     isTenantView={isTenantView} 
                 />
+            )}
+
+            {!isTenantView && allContracts.filter(c => c.id !== contract?.id).length > 0 && (
+                <div style={{ marginTop: '3rem' }}>
+                    <h3 style={{ color: '#5f6368', fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid #dadce0', paddingBottom: '0.5rem' }}>
+                        📜 Historial de Contratos Finalizados
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {allContracts.filter(c => c.id !== contract?.id).sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()).map(old => (
+                            <div key={old.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dadce0' }}>
+                                <div>
+                                    <div style={{ fontWeight: 600, color: '#3c4043' }}>{old.tenantName || 'Inquilino S/N'}</div>
+                                    <div style={{ fontSize: '0.85rem', color: '#5f6368' }}>Desde {new Date(old.startDate).toLocaleDateString()} al {new Date(old.endDate).toLocaleDateString()}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 600, color: '#1a73e8' }}>{old.currency} {old.rentAmount.toLocaleString()}</div>
+                                </div>
+                                <div>
+                                    <button onClick={() => setViewingOldContractId(old.id!)} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
+                                        Ver Auditar Pagos Viejos
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {viewingOldContractId && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem', overflowY: 'auto' }}>
+                    <div className="card fade-in" style={{ backgroundColor: '#fff', width: '100%', maxWidth: '900px', borderRadius: '8px', position: 'relative' }}>
+                        <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: '#1a73e8' }}>Auditoría de Pagos Viejos</h2>
+                        <button onClick={() => setViewingOldContractId(null)} className="btn btn-secondary" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem' }}>
+                            Cerrar Historial
+                        </button>
+                        {/* Renderizamos la grilla de pagos pero para el contrato antiguo */}
+                        <RentPaymentsList propertyId={propertyId} contractId={viewingOldContractId} isTenantView={false} />
+                    </div>
+                </div>
             )}
         </div>
     );
