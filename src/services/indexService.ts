@@ -3,14 +3,14 @@ export interface IndexData {
     value: number; // Porcentaje de aumento mensual
 }
 
-// Datos de fallback estáticos recientes (Ej: 2024 de Argentina) 
-// para asegurar que siempre haya una base proyectable si el fetch falla.
+// Datos de fallback estáticos recientes (Inflación mensual Argentina ~2.5% a 3%) 
+// para reflejar un anualizado cercano al 35% como en la actualidad.
 const FALLBACK_IPC_DATA = [
-    { period: '2023-11', value: 12.8 },
-    { period: '2023-12', value: 25.5 },
-    { period: '2024-01', value: 20.6 },
-    { period: '2024-02', value: 13.2 },
-    { period: '2024-03', value: 11.0 }
+    { period: '2024-10', value: 2.7 },
+    { period: '2024-11', value: 2.8 },
+    { period: '2024-12', value: 2.5 },
+    { period: '2025-01', value: 2.4 },
+    { period: '2025-02', value: 2.6 }
 ];
 
 export const indexService = {
