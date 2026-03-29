@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -12,7 +12,9 @@ import {
     LogOut,
     Key,
     Tag,
-    Zap
+    Zap,
+    Menu,
+    X
 } from 'lucide-react';
 import { APP_VERSION } from '../version';
 
@@ -22,6 +24,12 @@ const Layout: React.FC = () => {
     const { user, logout } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const closeMobileMenu = () => {
+        setIsMobileMenuOpen(false);
+    };
 
     const handleLogout = () => {
         logout();
@@ -45,17 +53,33 @@ const Layout: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
+            
+            {/* Mobile Top Bar */}
+            <header className="mobile-topbar">
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img 
+                        src="/logo.png" 
+                        alt="Admin Prop Logo" 
+                        style={{ height: '32px', width: 'auto', objectFit: 'contain' }} 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                    />
+                </div>
+                <button 
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.5rem', cursor: 'pointer' }}
+                >
+                    {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                </button>
+            </header>
+
+            {/* Mobile Overlay Backdrop */}
+            <div 
+                className={`mobile-menu-overlay ${isMobileMenuOpen ? 'open' : ''}`} 
+                onClick={closeMobileMenu}
+            ></div>
+
             {/* Sidebar */}
-            <aside style={{
-                width: '260px',
-                backgroundColor: 'var(--color-surface)',
-                borderRight: '1px solid var(--color-border)',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'fixed',
-                height: '100vh',
-                zIndex: 10
-            }}>
+            <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
                 <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                     <img 
                         src="/logo.png" 
@@ -72,49 +96,49 @@ const Layout: React.FC = () => {
                 </div>
 
                 <nav style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
-                    <Link to="/dashboard" style={navItemStyle('/dashboard')}>
+                    <Link to="/dashboard" style={navItemStyle('/dashboard')} onClick={closeMobileMenu}>
                         <LayoutDashboard size={20} />
                         Dashboard
                     </Link>
 
-                    <Link to="/properties" style={navItemStyle('/properties')}>
+                    <Link to="/properties" style={navItemStyle('/properties')} onClick={closeMobileMenu}>
                         <Building2 size={20} />
                         Mis Propiedades
                     </Link>
 
-                    <Link to="/rentals" style={navItemStyle('/rentals')}>
+                    <Link to="/rentals" style={navItemStyle('/rentals')} onClick={closeMobileMenu}>
                         <Key size={20} />
                         Alquiladas por Mí
                     </Link>
 
-                    <Link to="/alerts" style={navItemStyle('/alerts')}>
+                    <Link to="/alerts" style={navItemStyle('/alerts')} onClick={closeMobileMenu}>
                         <Bell size={20} />
                         Mis Alertas
                     </Link>
 
-                    <Link to="/calendar" style={navItemStyle('/calendar')}>
+                    <Link to="/calendar" style={navItemStyle('/calendar')} onClick={closeMobileMenu}>
                         <Calendar size={20} />
                         Mi Calendario
                     </Link>
 
-                    <Link to="/finances" style={navItemStyle('/finances')}>
+                    <Link to="/finances" style={navItemStyle('/finances')} onClick={closeMobileMenu}>
                         <Wallet size={20} />
                         Gastos e Ingresos
                     </Link>
 
-                    <Link to="/messages" style={navItemStyle('/messages')}>
+                    <Link to="/messages" style={navItemStyle('/messages')} onClick={closeMobileMenu}>
                         <MessageSquare size={20} />
                         Mis Mensajes
                     </Link>
 
-                    <Link to="/upgrade" style={navItemStyle('/upgrade')}>
+                    <Link to="/upgrade" style={navItemStyle('/upgrade')} onClick={closeMobileMenu}>
                         <Zap size={20} />
                         Mi Suscripción
                     </Link>
 
                     <div style={{ margin: '1rem 0', borderTop: '1px solid var(--color-border)' }}></div>
 
-                    <Link to="/settings" style={navItemStyle('/settings')}>
+                    <Link to="/settings" style={navItemStyle('/settings')} onClick={closeMobileMenu}>
                         <Settings size={20} />
                         Configuración
                     </Link>
@@ -122,7 +146,7 @@ const Layout: React.FC = () => {
                     {IS_SUPER_ADMIN(user?.email) && (
                         <>
                             <div style={{ margin: '1rem 0', borderTop: '1px solid var(--color-border)' }}></div>
-                            <Link to="/admin/coupons" style={navItemStyle('/admin/coupons')}>
+                            <Link to="/admin/coupons" style={navItemStyle('/admin/coupons')} onClick={closeMobileMenu}>
                                 <Tag size={20} />
                                 Gestión Cupones
                             </Link>
@@ -152,12 +176,7 @@ const Layout: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <main style={{
-                flex: 1,
-                marginLeft: '260px',
-                padding: '2rem',
-                maxWidth: '100%'
-            }}>
+            <main className="main-content">
                 <div className="container">
                     <Outlet />
                 </div>
