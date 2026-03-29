@@ -206,6 +206,11 @@ export const propertyService = {
         return snp.docs.map(d => ({ id: d.id, ...d.data() } as PropertyExpense));
     },
 
+    async updateExpense(propertyId: string, expenseId: string, data: Partial<PropertyExpense>): Promise<void> {
+        const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses/${expenseId}`);
+        await updateDoc(docRef, data as any);
+    },
+
     async deleteExpense(propertyId: string, expenseId: string): Promise<void> {
         const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses/${expenseId}`);
         await deleteDoc(docRef);

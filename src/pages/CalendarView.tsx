@@ -166,12 +166,14 @@ const CalendarView: React.FC = () => {
                         <p>Sincronizando fechas...</p>
                     </div>
                 ) : (
-                    <div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0px', textAlign: 'center', fontWeight: 600, color: '#5f6368', paddingBottom: '0.5rem' }}>
-                            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0px' }}>
-                            {renderCalendarGrid()}
+                    <div style={{ overflowX: 'auto', paddingBottom: '1rem' }}>
+                        <div style={{ minWidth: '800px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0px', textAlign: 'center', fontWeight: 600, color: '#5f6368', paddingBottom: '0.5rem' }}>
+                                <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0px' }}>
+                                {renderCalendarGrid()}
+                            </div>
                         </div>
                     </div>
                 )}

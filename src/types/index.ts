@@ -90,6 +90,8 @@ export interface PropertyExpense {
     currency: 'USD' | 'ARS';
     description: string;
     receiptUrl?: string; // Por si suben factura del arreglo
+    isVerified?: boolean; // Aprobado por el dueño
+    tenantId?: string; // Quién lo subió (si fue el inquilino)
 }
 
 export interface RentPayment {

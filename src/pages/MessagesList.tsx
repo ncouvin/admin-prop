@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { propertyService } from '../services/propertyService';
 import type { Property, RentalContract, ContractMessage } from '../types';
-import { MessageSquare, User } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { MessageSquare, User, X } from 'lucide-react';
+
+import ContractMessages from '../components/ContractMessages';
 
 interface ChatItem {
     property: Property;
@@ -13,9 +14,9 @@ interface ChatItem {
 
 const MessagesList: React.FC = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const [chats, setChats] = useState<ChatItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
 
     useEffect(() => {
         const loadChats = async () => {
@@ -77,7 +78,7 @@ const MessagesList: React.FC = () => {
                                     border: isUnread ? '1px solid #1a73e8' : '1px solid #dadce0',
                                     backgroundColor: isUnread ? '#f8fafd' : '#fff'
                                 }}
-                                onClick={() => navigate(`/properties/${chat.property.id}`)}
+                                onClick={() => setSelectedChat(chat)}
                             >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -90,8 +91,11 @@ const MessagesList: React.FC = () => {
                                             <User size={24} />
                                         </div>
                                         <div>
-                                            <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.3rem 0', color: isUnread ? '#1a73e8' : '#202124', fontWeight: isUnread ? 600 : 500 }}>
-                                                {chat.property.name}
+                                            <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.3rem 0', color: isUnread ? '#1a73e8' : '#202124', fontWeight: isUnread ? 600 : 500, display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                                {chat.property.name} 
+                                                <span style={{fontSize: '0.85rem', color: '#5f6368', fontWeight: 400, backgroundColor: '#f1f3f4', padding: '2px 6px', borderRadius: '4px'}}>
+                                                    👤 {chat.contract.tenantName || chat.contract.tenantEmail || 'Inquilino'}
+                                                </span>
                                             </h3>
                                             <p style={{ margin: 0, color: '#5f6368', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                                 {chat.lastMessage ? (
@@ -132,6 +136,26 @@ const MessagesList: React.FC = () => {
                             </div>
                         );
                     })}
+                </div>
+            )}
+        
+            {/* Modal de Chat Rápido */}
+            {selectedChat && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+                    <div className="card fade-in" style={{ width: '100%', maxWidth: '800px', backgroundColor: '#fff', position: 'relative', display: 'flex', flexDirection: 'column', padding: '1.5rem', maxHeight: '90vh' }}>
+                        <button 
+                            onClick={() => {
+                                setSelectedChat(null);
+                                // Forzar refresco ligero en vez de recargar chats si es necesario, 
+                                // pero el websocket interno de ContractMessages los lee bien.
+                            }}
+                            style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', cursor: 'pointer', color: '#5f6368', zIndex: 10 }}
+                        >
+                            <X size={28} />
+                        </button>
+                        {/* Se renderiza el chat existente */}
+                        <ContractMessages propertyId={selectedChat.property.id} contractId={selectedChat.contract.id!} />
+                    </div>
                 </div>
             )}
         </div>
