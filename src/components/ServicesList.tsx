@@ -6,9 +6,10 @@ import { Plus, Trash2, Upload, ExternalLink, CheckCircle, Clock } from 'lucide-r
 
 interface Props {
     propertyId: string;
+    isTenantView?: boolean;
 }
 
-const ServicesList: React.FC<Props> = ({ propertyId }) => {
+const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => {
     const [services, setServices] = useState<PropertyService[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState<string | null>(null); // Guardará 'serviceId-month' si sube
@@ -79,6 +80,7 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
     };
 
     const handleTogglePaymentStatus = async (serviceId: string, month: number, currentPayment?: ServicePayment) => {
+        if (isTenantView) return; // Inquilinos no pueden cambiar estado manual, solo subiendo fotos
         const newStatus = currentPayment?.status === 'paid' ? 'pending' : 'paid';
         
         const paymentData: ServicePayment = {
@@ -112,6 +114,17 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
         if (!e.target.files || e.target.files.length === 0) return;
         
         const file = e.target.files[0];
+
+        let amountPaid: number | undefined = undefined;
+        if (isTenantView) {
+            const a = window.prompt("Obligatorio: Ingresa el valor exacto ($) que pagaste en este comprobante:");
+            if (!a || isNaN(parseFloat(a))) {
+                alert("Debes ingresar un valor numérico válido para subir el comprobante.");
+                return;
+            }
+            amountPaid = parseFloat(a);
+        }
+
         setUploading(`${serviceId}-${month}`);
         
         try {
@@ -125,7 +138,8 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
                 month,
                 status: 'paid', // Asumimos pagado si sube comprobante
                 receiptUrl: url,
-                paymentDate: new Date().toISOString()
+                paymentDate: new Date().toISOString(),
+                amount: amountPaid
             };
 
             await propertyService.saveServicePayment(propertyId, serviceId, paymentData);
@@ -144,9 +158,10 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Alta de servicio */}
-            <div className="card" style={{ backgroundColor: '#f8f9fa' }}>
-                <h3 style={{ marginBottom: '1rem', color: '#202124', fontSize: '1.2rem' }}>Dar de alta nuevo Servicio / Impuesto</h3>
-                <form onSubmit={handleAddService} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            {!isTenantView && (
+                <div className="card" style={{ backgroundColor: '#f8f9fa' }}>
+                    <h3 style={{ marginBottom: '1rem', color: '#202124', fontSize: '1.2rem' }}>Dar de alta nuevo Servicio / Impuesto</h3>
+                    <form onSubmit={handleAddService} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '200px' }}>
                         <label className="label">Nombre del Servicio</label>
                         <input type="text" className="input" required placeholder="Ej: Expensas, ARBA, AYSA..." value={newServiceName} onChange={e => setNewServiceName(e.target.value)} />
@@ -164,6 +179,7 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
                     </button>
                 </form>
             </div>
+            )}
 
             {/* Listado de Servicios y Control Mensual */}
             {services.length === 0 ? (
@@ -180,7 +196,7 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
                                 <th style={{ padding: '1rem', color: '#202124', textAlign: 'center' }} colSpan={12}>
                                     Control de Pagos ({currentYear})
                                 </th>
-                                <th style={{ padding: '1rem', textAlign: 'center', width: '60px' }}>Acción</th>
+                                {!isTenantView && <th style={{ padding: '1rem', textAlign: 'center', width: '60px' }}>Acción</th>}
                             </tr>
                             <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '1px solid #dadce0' }}>
                                 <th></th>
@@ -190,7 +206,7 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
                                         {new Date(currentYear, m - 1).toLocaleString('es', { month: 'short' }).toUpperCase()}
                                     </th>
                                 ))}
-                                <th></th>
+                                {!isTenantView && <th></th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -214,16 +230,22 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
                                                     <button 
                                                         onClick={() => handleTogglePaymentStatus(srv.id, m, payment)}
                                                         title={isPaid ? "Marcar Pendiente" : "Marcar Pagado"}
-                                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50%', backgroundColor: isPaid ? '#e6f4ea' : '#fce8e6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                        disabled={isTenantView}
+                                                        style={{ background: 'none', border: 'none', cursor: isTenantView ? 'default' : 'pointer', padding: '4px', borderRadius: '50%', backgroundColor: isPaid ? '#e6f4ea' : '#fce8e6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                     >
                                                         {isPaid ? <CheckCircle size={18} color="#188038" /> : <Clock size={18} color="#d93025" />}
                                                     </button>
                                                     
                                                     {/* Receipt Logic */}
                                                     {payment?.receiptUrl ? (
-                                                        <a href={payment.receiptUrl} target="_blank" rel="noreferrer" title="Ver Comprobante" style={{ color: '#1a73e8' }}>
-                                                            <ExternalLink size={14} />
-                                                        </a>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                            <a href={payment.receiptUrl} target="_blank" rel="noreferrer" title="Ver Comprobante" style={{ color: '#1a73e8' }}>
+                                                                <ExternalLink size={14} />
+                                                            </a>
+                                                            {payment.amount !== undefined && (
+                                                                <div style={{ fontSize: '0.65rem', color: '#1a73e8', fontWeight: 600 }}>${payment.amount}</div>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <label title="Subir Comprobante" style={{ cursor: isUploading ? 'wait' : 'pointer', color: '#9aa0a6' }}>
                                                             <Upload size={14} style={{ opacity: isUploading ? 0.5 : 1 }} />
@@ -241,11 +263,13 @@ const ServicesList: React.FC<Props> = ({ propertyId }) => {
                                         );
                                     })}
 
-                                    <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                        <button onClick={() => handleDeleteService(srv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d93025' }} title="Eliminar Servicio">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </td>
+                                    {!isTenantView && (
+                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                            <button onClick={() => handleDeleteService(srv.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#d93025' }} title="Eliminar Servicio">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

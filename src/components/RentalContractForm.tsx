@@ -144,9 +144,21 @@ const RentalContractForm: React.FC<Props> = ({ propertyId }) => {
 
     return (
         <div className="card">
-            <h3 style={{ marginBottom: '1.5rem', color: '#1a73e8', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Calendar size={20} />
-                {contract ? 'Contrato Vigente' : 'Configurar Nuevo Contrato'}
+            <h3 style={{ marginBottom: '1.5rem', color: '#1a73e8', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Calendar size={20} />
+                    {contract ? 'Contrato Vigente' : 'Configurar Nuevo Contrato'}
+                </div>
+                {contract && contract.id && (
+                    <button 
+                        onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText(contract.id!); alert("ID de contrato copiado al portapapeles (" + contract.id + ")"); }}
+                        className="btn btn-secondary" 
+                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.75rem', height: 'auto', backgroundColor: '#e8f0fe', color: '#1a73e8' }}
+                        title="Dile a tu inquilino que ingrese este ID en su cuenta para vincular el alquiler."
+                    >
+                        Copiar ID de Vinculación para Inquilino
+                    </button>
+                )}
             </h3>
 
             {contract && statusObj && (

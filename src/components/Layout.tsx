@@ -9,7 +9,8 @@ import {
     Wallet,
     MessageSquare,
     Settings,
-    LogOut
+    LogOut,
+    Key
 } from 'lucide-react';
 import { APP_VERSION } from '../version';
 
@@ -65,6 +66,11 @@ const Layout: React.FC = () => {
                     <Link to="/properties" style={navItemStyle('/properties')}>
                         <Building2 size={20} />
                         Mis Propiedades
+                    </Link>
+
+                    <Link to="/rentals" style={navItemStyle('/rentals')}>
+                        <Key size={20} />
+                        Alquiladas por Mí
                     </Link>
 
                     <Link to="/alerts" style={navItemStyle('/alerts')}>

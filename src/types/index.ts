@@ -17,12 +17,14 @@ export interface Property {
     features: string; // Ej: "3 ambientes, al frente, balcón, cochera"
     images?: string[]; // Array de URLs de Cloudinary
     isRented: boolean; // Si este toggle está prendido, habilita los campos de abajo
+    tenantId?: string; // ID del usuario inquilino vinculado a esta propiedad
 }
 
 // Sub-colección o parte de la Propiedad cuando isRented = true
 export interface RentalContract {
     id?: string;
     propertyId: string;
+    tenantId?: string; // ID del usuario inquilino
     rentAmount: number;
     currency: 'USD' | 'ARS';
     startDate: string; // YYYY-MM-DD

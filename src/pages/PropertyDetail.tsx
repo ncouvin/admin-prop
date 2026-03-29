@@ -41,24 +41,28 @@ const PropertyDetail: React.FC = () => {
     };
 
     if (!property) return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando detalles...</div>;
+    
+    const isTenantView = property.ownerId !== user?.id;
 
     return (
         <div className="container fade-in">
             <div className="header-actions">
-                <button className="btn btn-secondary" onClick={() => navigate('/dashboard')}>
+                <button className="btn btn-secondary" onClick={() => navigate(-1)}>
                     <ArrowLeft size={20} />
                     Volver
                 </button>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-secondary" onClick={() => navigate(`/properties/${id}/edit`)}>
-                        <Edit size={20} />
-                        Editar Propiedad
-                    </button>
-                    <button className="btn btn-danger" onClick={handleDelete} style={{ color: 'red' }}>
-                        <Trash2 size={20} />
-                        Eliminar Propiedad
-                    </button>
-                </div>
+                {!isTenantView && (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button className="btn btn-secondary" onClick={() => navigate(`/properties/${id}/edit`)}>
+                            <Edit size={20} />
+                            Editar Propiedad
+                        </button>
+                        <button className="btn btn-danger" onClick={handleDelete} style={{ color: 'red' }}>
+                            <Trash2 size={20} />
+                            Eliminar Propiedad
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="card" style={{ marginBottom: '2rem', backgroundColor: '#fff', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
@@ -89,7 +93,7 @@ const PropertyDetail: React.FC = () => {
                 >
                     <Zap size={18} /> Impuestos & Expensas
                 </button>
-                {property.isRented && (
+                {(property.isRented && !isTenantView) && (
                     <button
                         style={{ background: 'none', border: 'none', padding: '1rem', cursor: 'pointer', borderBottom: activeTab === 'contracts' ? '2px solid #1a73e8' : 'none', color: activeTab === 'contracts' ? '#1a73e8' : '#5f6368', fontWeight: activeTab === 'contracts' ? 600 : 400, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         onClick={() => setActiveTab('contracts')}
@@ -146,7 +150,7 @@ const PropertyDetail: React.FC = () => {
                 )}
 
                 {activeTab === 'services' && (
-                    <ServicesList propertyId={property.id} />
+                    <ServicesList propertyId={property.id} isTenantView={isTenantView} />
                 )}
 
                 {activeTab === 'contracts' && (
