@@ -193,10 +193,13 @@ export const propertyService = {
 
     // ---- GASTOS Y ARREGLOS ----
     async addExpense(propertyId: string, expenseData: Omit<PropertyExpense, 'id' | 'propertyId'>): Promise<string> {
-        const docRef = await addDoc(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses`), {
-            ...expenseData,
-            propertyId
+        const payload = { ...expenseData, propertyId };
+        Object.keys(payload).forEach(key => {
+            if (payload[key as keyof typeof payload] === undefined) {
+                delete payload[key as keyof typeof payload];
+            }
         });
+        const docRef = await addDoc(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses`), payload);
         return docRef.id;
     },
 
@@ -208,7 +211,13 @@ export const propertyService = {
 
     async updateExpense(propertyId: string, expenseId: string, data: Partial<PropertyExpense>): Promise<void> {
         const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/expenses/${expenseId}`);
-        await updateDoc(docRef, data as any);
+        const payload = { ...data };
+        Object.keys(payload).forEach(key => {
+            if (payload[key as keyof typeof payload] === undefined) {
+                delete payload[key as keyof typeof payload];
+            }
+        });
+        await updateDoc(docRef, payload as any);
     },
 
     async deleteExpense(propertyId: string, expenseId: string): Promise<void> {
