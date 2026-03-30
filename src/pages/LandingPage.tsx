@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MessageSquareOff, Cloud, Clock, CheckCircle2, LayoutDashboard, Smartphone } from 'lucide-react';
+import { MessageSquareOff, Cloud, Clock, CheckCircle2 } from 'lucide-react';
 import './LandingPage.css';
 
 const LandingPage: React.FC = () => {
@@ -123,14 +123,36 @@ const LandingPage: React.FC = () => {
                             </li>
                         </ul>
                     </div>
-                    <div className="hero-image-placeholder" style={{ height: '300px', background: 'linear-gradient(135deg, #1e3a5f 0%, #0b192c 100%)' }}>
-                        <LayoutDashboard size={80} style={{ opacity: 0.3 }} />
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <img 
+                            src="/propiedades.jfif" 
+                            alt="Gestión de propiedades" 
+                            style={{ 
+                                width: '100%', 
+                                maxWidth: '500px', 
+                                height: 'auto', 
+                                borderRadius: '12px', 
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                                border: '1px solid #e5e7eb'
+                            }} 
+                        />
                     </div>
                 </section>
 
                 <section className="split-section" style={{ marginTop: '0' }}>
-                    <div className="hero-image-placeholder" style={{ height: '300px', background: 'linear-gradient(135deg, #4F8C2E 0%, #2A5A13 100%)', order: 2 }}>
-                        <Smartphone size={80} color="white" style={{ opacity: 0.3 }} />
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', order: 2 }}>
+                        <img 
+                            src="/gastos.png" 
+                            alt="Panel de gastos" 
+                            style={{ 
+                                width: '100%', 
+                                maxWidth: '500px', 
+                                height: 'auto', 
+                                borderRadius: '12px', 
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                                border: '1px solid #e5e7eb'
+                            }} 
+                        />
                     </div>
                     <div style={{ order: 1 }}>
                         <span className="role-badge tenant">INQUILINOS</span>
