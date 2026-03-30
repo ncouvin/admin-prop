@@ -6,6 +6,10 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
         throw new Error('Cloudinary configuration is missing');
     }
 
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        throw new Error(`El archivo o foto es demasiado pesado (${(file.size / 1024 / 1024).toFixed(1)}MB). El límite gratuito por archivo es 10MB. Por favor, comprimí el PDF o sacale una foto de menor resolución.`);
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', uploadPreset);

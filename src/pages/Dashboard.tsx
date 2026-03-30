@@ -14,6 +14,7 @@ interface ExtendedProperty extends Property {
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
     const [properties, setProperties] = useState<ExtendedProperty[]>([]);
+    const [rentingProperties, setRentingProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [stats, setStats] = useState({
@@ -34,6 +35,8 @@ const Dashboard: React.FC = () => {
             try {
                 // 1. Fetch properties
                 const userProperties = await propertyService.getPropertiesByOwner(user.id);
+                const rProps = await propertyService.getRentingProperties(user.id);
+                setRentingProperties(rProps);
                 
                 // 2. Fetch exchange rate
                 const exRate = await exchangeService.getOfficialDollarRate();
@@ -159,6 +162,55 @@ const Dashboard: React.FC = () => {
     const netIncomeArs = grossIncomeArs; // The user requested to NOT subtract expenses from this projected subtotal
 
     if (properties.length === 0) {
+        if (rentingProperties.length > 0) {
+            return (
+                <div className="fade-in">
+                    <h1 style={{ fontSize: '1.8rem', color: '#202124', marginBottom: '0.5rem' }}>Hola, {user?.name?.split(' ')[0]}</h1>
+                    <p style={{ color: '#5f6368', marginBottom: '2rem' }}>Te damos la bienvenida a tu panel principal de Inquilino.</p>
+
+                    <h2 style={{ fontSize: '1.4rem', color: '#1a73e8', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Home size={24} /> Tus Alquileres Activos
+                    </h2>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+                        {rentingProperties.map(rp => (
+                            <div key={rp.id} className="card" style={{ padding: '0', cursor: 'pointer', overflow: 'hidden', border: '1px solid #dadce0', transition: 'all 0.2s', display: 'flex', flexDirection: 'column' }} 
+                                 onClick={() => window.location.href = `/rentals`}
+                                 onMouseOver={(e) => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(16,185,129,0.15)' }}
+                                 onMouseOut={(e) => { e.currentTarget.style.borderColor = '#dadce0'; e.currentTarget.style.boxShadow = 'none' }}
+                            >
+                                <div style={{ height: '6px', width: '100%', backgroundColor: '#10b981' }}></div>
+                                <div style={{ padding: '1.5rem' }}>
+                                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#202124', fontSize: '1.2rem' }}>{rp.name}</h3>
+                                    <p style={{ margin: 0, color: '#5f6368', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Building size={16} /> {rp.address}
+                                    </p>
+                                </div>
+                                <div style={{ marginTop: 'auto', padding: '1rem 1.5rem', backgroundColor: '#f6fdf6', borderTop: '1px solid #f1f3f4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: '#10b981', fontWeight: 600, fontSize: '0.9rem' }}>Ingresar al Portal de Alquiler</span>
+                                    <FileText size={18} color="#10b981" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="card" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center', padding: '2.5rem', border: '1px dashed #dadce0', backgroundColor: '#fdfdfd' }}>
+                        <h3 style={{ fontSize: '1.2rem', color: '#5f6368', marginBottom: '1rem' }}>¿Sos dueño de otras propiedades?</h3>
+                        <p style={{ color: '#80868b', marginBottom: '2rem', fontSize: '0.95rem' }}>Si también administrás alquileres podés darlos de alta o vincularte a rentas compartidas desde acá.</p>
+                        
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
+                            <button className="btn btn-secondary" onClick={handleLinkCoOwner} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <LinkIcon size={18} /> Vincularme como Copropietario
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => window.location.href = '/properties/new'} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                + Alta Inmueble Nuevo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div className="fade-in">
                 <h1 style={{ fontSize: '1.8rem', color: '#202124', marginBottom: '0.5rem' }}>Hola, {user?.name?.split(' ')[0]}</h1>
@@ -168,7 +220,7 @@ const Dashboard: React.FC = () => {
                     <Home size={48} color="#1a73e8" style={{ marginBottom: '1.5rem', opacity: 0.8 }} />
                     <h2 style={{ fontSize: '1.5rem', color: '#202124', marginBottom: '1rem' }}>No administras propiedades aún</h2>
                     <p style={{ color: '#5f6368', marginBottom: '2rem', lineHeight: 1.5 }}>
-                        Para visualizar tus proyecciones financieras y administrar tu rendimiento, da de alta tu primera unidad. Si eres inquilino, dirígete a tu sección de alquileres.
+                        Para visualizar tus proyecciones financieras y administrar tu rendimiento, da de alta tu primera unidad.
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
                         <button className="btn btn-primary" onClick={() => window.location.href = '/properties/new'} style={{ width: '100%', maxWidth: '300px' }}>
@@ -176,9 +228,6 @@ const Dashboard: React.FC = () => {
                         </button>
                         <button className="btn btn-secondary" onClick={handleLinkCoOwner} style={{ width: '100%', maxWidth: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                             <LinkIcon size={18} /> ¿Soy Copropietario? Vincular
-                        </button>
-                        <button className="btn btn-secondary" onClick={() => window.location.href = '/rentals'} style={{ width: '100%', maxWidth: '300px' }}>
-                            Soy Inquilino / Ver mis Alquileres
                         </button>
                     </div>
                 </div>
