@@ -42,11 +42,18 @@ const LandingPage: React.FC = () => {
                         {/* <a href="#features" className="btn-outline">Ver demos</a> */}
                     </div>
 
-                    <div className="hero-image-placeholder">
-                        <div style={{ textAlign: 'center', zIndex: 10 }}>
-                            <LayoutDashboard size={64} style={{ opacity: 0.8, marginBottom: '1rem' }} />
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Panel Administrativo Integrado</h3>
-                        </div>
+                    <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto', display: 'flex', justifyContent: 'center' }}>
+                        <img 
+                            src="/dashboard.png" 
+                            alt="Dashboard de AdminProp" 
+                            style={{ 
+                                width: '100%', 
+                                height: 'auto', 
+                                borderRadius: '12px', 
+                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                                border: '1px solid #e5e7eb'
+                            }} 
+                        />
                     </div>
                 </section>
 
