@@ -107,7 +107,8 @@ const PropertyForm: React.FC = () => {
             if (id) {
                 await propertyService.updateProperty(id, formData);
             } else {
-                const newProperty: Omit<Property, 'id'> = {
+                const newProperty = {
+                    ...formData,
                     ownerId: user.id,
                     coOwnerIds: [],
                     name: formData.name || '',
@@ -118,10 +119,8 @@ const PropertyForm: React.FC = () => {
                     features: formData.features || '',
                     isRented: formData.isRented || false,
                     images: formData.images || [],
-                    notes: formData.notes || '',
-                    deedUrl: formData.deedUrl || undefined,
-                    currentContractUrl: formData.currentContractUrl || undefined
-                };
+                    notes: formData.notes || ''
+                } as Omit<Property, 'id'>;
                 await propertyService.createProperty(newProperty);
             }
 

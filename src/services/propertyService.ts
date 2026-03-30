@@ -7,7 +7,11 @@ const PROPERTIES_COLLECTION = 'properties';
 export const propertyService = {
     // ---- PROPIEDADES BASE ----
     async createProperty(propertyData: Omit<Property, 'id'>): Promise<string> {
-        const docRef = await addDoc(collection(db, PROPERTIES_COLLECTION), propertyData);
+        const payload = { ...propertyData } as any;
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === undefined) delete payload[key];
+        });
+        const docRef = await addDoc(collection(db, PROPERTIES_COLLECTION), payload);
         return docRef.id;
     },
 
@@ -47,7 +51,11 @@ export const propertyService = {
 
     async updateProperty(id: string, propertyData: Partial<Property>): Promise<void> {
         const docRef = doc(db, PROPERTIES_COLLECTION, id);
-        await updateDoc(docRef, propertyData);
+        const payload = { ...propertyData } as any;
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === undefined) delete payload[key];
+        });
+        await updateDoc(docRef, payload);
     },
 
     async deleteProperty(id: string): Promise<void> {
@@ -113,8 +121,12 @@ export const propertyService = {
 
     // ---- CONTRATOS DE ALQUILER ----
     async saveRentalContract(propertyId: string, contractData: Omit<RentalContract, 'propertyId'>): Promise<void> {
+        const payload = { ...contractData, propertyId, active: true, createdAt: new Date().toISOString() } as any;
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === undefined) delete payload[key];
+        });
         const contractsRef = collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts`);
-        await addDoc(contractsRef, { ...contractData, propertyId, active: true, createdAt: new Date().toISOString() });
+        await addDoc(contractsRef, payload);
     },
 
     async getActiveRentalContract(propertyId: string): Promise<RentalContract | null> {
@@ -130,7 +142,11 @@ export const propertyService = {
 
     async updateRentalContract(propertyId: string, contractId: string, data: Partial<RentalContract>): Promise<void> {
         const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}`);
-        await updateDoc(docRef, data);
+        const payload = { ...data } as any;
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === undefined) delete payload[key];
+        });
+        await updateDoc(docRef, payload);
     },
 
     async getAllRentalContracts(propertyId: string): Promise<RentalContract[]> {
@@ -227,10 +243,11 @@ export const propertyService = {
 
     // ---- PAGOS CUBIERTOS DEL ALQUILER ----
     async addRentPayment(propertyId: string, contractId: string, paymentData: Omit<RentPayment, 'id' | 'contractId'>): Promise<string> {
-        const docRef = await addDoc(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments`), {
-            ...paymentData,
-            contractId
+        const payload = { ...paymentData, contractId } as any;
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === undefined) delete payload[key];
         });
+        const docRef = await addDoc(collection(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments`), payload);
         return docRef.id;
     },
 
@@ -242,7 +259,11 @@ export const propertyService = {
 
     async updateRentPayment(propertyId: string, contractId: string, paymentId: string, data: Partial<RentPayment>): Promise<void> {
         const docRef = doc(db, `${PROPERTIES_COLLECTION}/${propertyId}/contracts/${contractId}/payments/${paymentId}`);
-        await updateDoc(docRef, data);
+        const payload = { ...data } as any;
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === undefined) delete payload[key];
+        });
+        await updateDoc(docRef, payload);
     },
 
     async deleteRentPayment(propertyId: string, contractId: string, paymentId: string): Promise<void> {
