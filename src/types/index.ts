@@ -22,6 +22,15 @@ export interface Property {
     tenantId?: string; // ID del usuario inquilino vinculado a esta propiedad
     deedUrl?: string; // Escritura (PDF)
     currentContractUrl?: string; // Contrato vigente en caso de existir (PDF)
+    coownershipRulebookUrl?: string; // Reglamento de Copropiedad (PDF)
+    internalRulebookUrl?: string; // Reglamento Interno (PDF)
+    hasJanitor?: boolean;
+    janitorName?: string;
+    janitorPhone?: string;
+    hasSecurity?: boolean;
+    securityContact?: string;
+    buildingAdminContact?: string;
+    buildingAdminEmail?: string;
     notes?: string; // Notas de texto del propietario
 }
 
@@ -41,6 +50,8 @@ export interface RentalContract {
     tenantEmail?: string;
     tenantPhone?: string;
     paymentDay?: string; // Ej: "10"
+    securityDepositAmount?: number; // Monto dejado en garantía total
+    guaranteeUrl?: string; // Seguro de Caución o Garantía Propietaria (PDF/IMG)
     notes?: string;
 }
 

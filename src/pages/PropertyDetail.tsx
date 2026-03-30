@@ -5,7 +5,8 @@ import { propertyService } from '../services/propertyService';
 import type { Property } from '../types';
 import {
     Building, MapPin, Edit, Trash2,
-    ArrowLeft, Zap, Image as ImageIcon, Key, Wrench, Home
+    ArrowLeft, Zap, Image as ImageIcon, Key, Wrench, Home,
+    FileText, Phone, Shield, User, Mail, Book
 } from 'lucide-react';
 import ServicesList from '../components/ServicesList';
 import RentalContractForm from '../components/RentalContractForm';
@@ -196,23 +197,108 @@ const PropertyDetail: React.FC = () => {
             <div className="tab-content">
                 {activeTab === 'details' && (
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 2fr) minmax(250px, 1fr)', gap: '2rem' }}>
-                        <div className="card">
-                            <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Características</h3>
-                            <p style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: '#3c4043' }}>
-                                {property.features || 'No hay características descriptivas detalladas.'}
-                            </p>
-                        </div>
-                        {(!isTenantView) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                             <div className="card">
-                                <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Finanzas Básicas</h3>
-                                <div style={{ backgroundColor: '#f8f9fa', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dadce0' }}>
-                                    <div style={{ fontSize: '0.9rem', color: '#5f6368', marginBottom: '0.25rem' }}>Valor de Mercado Estimado</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1a73e8' }}>
-                                        {property.currency} {property.estimatedValue?.toLocaleString() || '0'}
+                                <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Características</h3>
+                                <p style={{ whiteSpace: 'pre-line', lineHeight: '1.6', color: '#3c4043' }}>
+                                    {property.features || 'No hay características descriptivas detalladas.'}
+                                </p>
+                            </div>
+
+                            {/* DOCUMENTOS */}
+                            {(property.deedUrl || property.coownershipRulebookUrl || property.internalRulebookUrl || property.currentContractUrl) && (
+                                <div className="card">
+                                    <h3 style={{ marginBottom: '1.5rem', color: '#202124', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <FileText size={20} color="#1a73e8" /> Documentación de la Propiedad
+                                    </h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                                        {property.deedUrl && (
+                                            <a href={property.deedUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <FileText size={16} /> Escritura
+                                            </a>
+                                        )}
+                                        {property.currentContractUrl && (
+                                            <a href={property.currentContractUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <FileText size={16} /> Contrato Vigente
+                                            </a>
+                                        )}
+                                        {property.coownershipRulebookUrl && (
+                                            <a href={property.coownershipRulebookUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Book size={16} /> Reg. de Copropiedad
+                                            </a>
+                                        )}
+                                        {property.internalRulebookUrl && (
+                                            <a href={property.internalRulebookUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Book size={16} /> Reglamento Interno
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+
+                            {/* CONTACTOS EDIFICIO */}
+                            {(property.hasJanitor || property.hasSecurity || property.buildingAdminContact) && (
+                                <div className="card">
+                                    <h3 style={{ marginBottom: '1.5rem', color: '#202124', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Building size={20} color="#1a73e8" /> Contactos del Edificio
+                                    </h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        {property.hasJanitor && (
+                                            <div style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                                                <User size={24} color="#5f6368" />
+                                                <div>
+                                                    <div style={{ fontWeight: 600, color: '#202124', marginBottom: '0.2rem' }}>Encargado / Portería</div>
+                                                    {property.janitorName && <div style={{ color: '#3c4043', fontSize: '0.95rem' }}>Nombre: {property.janitorName}</div>}
+                                                    {property.janitorPhone && <div style={{ color: '#3c4043', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}><Phone size={14}/> {property.janitorPhone}</div>}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {property.hasSecurity && (
+                                            <div style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                                                <Shield size={24} color="#5f6368" />
+                                                <div>
+                                                    <div style={{ fontWeight: 600, color: '#202124', marginBottom: '0.2rem' }}>Seguridad</div>
+                                                    {property.securityContact && <div style={{ color: '#3c4043', fontSize: '0.95rem' }}>{property.securityContact}</div>}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {property.buildingAdminContact && (
+                                            <div style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                                                <Building size={24} color="#5f6368" />
+                                                <div>
+                                                    <div style={{ fontWeight: 600, color: '#202124', marginBottom: '0.2rem' }}>Administración / Consorcio</div>
+                                                    <div style={{ color: '#3c4043', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}><Phone size={14}/> {property.buildingAdminContact}</div>
+                                                    {property.buildingAdminEmail && <div style={{ color: '#3c4043', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.2rem' }}><Mail size={14}/> {property.buildingAdminEmail}</div>}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                            {(!isTenantView) && (
+                                <div className="card">
+                                    <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Finanzas Básicas</h3>
+                                    <div style={{ backgroundColor: '#f8f9fa', padding: '1.5rem', borderRadius: '8px', border: '1px solid #dadce0' }}>
+                                        <div style={{ fontSize: '0.9rem', color: '#5f6368', marginBottom: '0.25rem' }}>Valor de Mercado Estimado</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1a73e8' }}>
+                                            {property.currency} {property.estimatedValue?.toLocaleString() || '0'}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {property.notes && !isTenantView && (
+                                <div className="card">
+                                    <h3 style={{ marginBottom: '1.5rem', color: '#202124' }}>Notas Administrativas</h3>
+                                    <div style={{ padding: '1rem', backgroundColor: '#fef7e0', borderRadius: '8px', border: '1px solid #fce8b2', color: '#b06000', whiteSpace: 'pre-line', fontSize: '0.95rem' }}>
+                                        {property.notes}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

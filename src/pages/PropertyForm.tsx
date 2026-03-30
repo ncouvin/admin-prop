@@ -83,7 +83,7 @@ const PropertyForm: React.FC = () => {
         }));
     };
 
-    const handleFileUpload = async (field: 'deedUrl' | 'currentContractUrl', e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (field: 'deedUrl' | 'currentContractUrl' | 'coownershipRulebookUrl' | 'internalRulebookUrl', e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         setUploading(true);
         try {
@@ -280,8 +280,127 @@ const PropertyForm: React.FC = () => {
                             )}
                         </div>
                     </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                        <div>
+                            <label className="label">Reglamento de Copropiedad (PDF)</label>
+                            {formData.coownershipRulebookUrl ? (
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <a href={formData.coownershipRulebookUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ flex: 1, textAlign: 'center', backgroundColor: '#eef2ff', borderColor: '#c7d2fe', color: '#4f46e5' }}>
+                                        <FileText size={18} /> Ver Copropiedad
+                                    </a>
+                                    <button type="button" className="btn btn-danger" onClick={() => handleChange('coownershipRulebookUrl', null)}>
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="btn btn-secondary" style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer', width: '100%' }}>
+                                    <Upload size={18} />
+                                    {uploading ? 'Subiendo...' : 'Subir Reglamento'}
+                                    <input type="file" accept=".pdf,image/*" hidden onChange={e => handleFileUpload('coownershipRulebookUrl', e)} disabled={uploading}/>
+                                </label>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="label">Reglamento Interno (PDF)</label>
+                            {formData.internalRulebookUrl ? (
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <a href={formData.internalRulebookUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ flex: 1, textAlign: 'center', backgroundColor: '#eef2ff', borderColor: '#c7d2fe', color: '#4f46e5' }}>
+                                        <FileText size={18} /> Ver Reg. Interno
+                                    </a>
+                                    <button type="button" className="btn btn-danger" onClick={() => handleChange('internalRulebookUrl', null)}>
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="btn btn-secondary" style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer', width: '100%' }}>
+                                    <Upload size={18} />
+                                    {uploading ? 'Subiendo...' : 'Subir Reglamento'}
+                                    <input type="file" accept=".pdf,image/*" hidden onChange={e => handleFileUpload('internalRulebookUrl', e)} disabled={uploading}/>
+                                </label>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="card">
+                    <h3>Contactos del Edificio / Consorcio</h3>
                     
-                    <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {/* ENCARGADO / PORTERO */}
+                    <div style={{ marginTop: '1rem', border: '1px solid #e5e7eb', padding: '1rem', borderRadius: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <input 
+                                type="checkbox" 
+                                id="hasJanitor" 
+                                checked={formData.hasJanitor || false}
+                                onChange={e => handleChange('hasJanitor', e.target.checked)}
+                                style={{ width: '18px', height: '18px' }}
+                            />
+                            <label htmlFor="hasJanitor" style={{ fontWeight: 600, color: '#374151' }}>
+                                El edificio cuenta con Encargado / Portero
+                            </label>
+                        </div>
+                        
+                        {formData.hasJanitor && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                                <div>
+                                    <label className="label" style={{ fontSize: '0.85rem' }}>Nombre del Encargado</label>
+                                    <input type="text" className="input" placeholder="Ej: Raúl" value={formData.janitorName || ''} onChange={e => handleChange('janitorName', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="label" style={{ fontSize: '0.85rem' }}>Teléfono / Celular</label>
+                                    <input type="text" className="input" placeholder="11 4444 5555" value={formData.janitorPhone || ''} onChange={e => handleChange('janitorPhone', e.target.value)} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* SEGURIDAD */}
+                    <div style={{ marginTop: '1rem', border: '1px solid #e5e7eb', padding: '1rem', borderRadius: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <input 
+                                type="checkbox" 
+                                id="hasSecurity" 
+                                checked={formData.hasSecurity || false}
+                                onChange={e => handleChange('hasSecurity', e.target.checked)}
+                                style={{ width: '18px', height: '18px' }}
+                            />
+                            <label htmlFor="hasSecurity" style={{ fontWeight: 600, color: '#374151' }}>
+                                El edificio cuenta con Seguridad (Totem / Ojo de Halcón / Presencial)
+                            </label>
+                        </div>
+                        
+                        {formData.hasSecurity && (
+                            <div style={{ marginTop: '1rem' }}>
+                                <label className="label" style={{ fontSize: '0.85rem' }}>Contacto de Seguridad</label>
+                                <input type="text" className="input" placeholder="Nombre completo, teléfono o instrucciones" value={formData.securityContact || ''} onChange={e => handleChange('securityContact', e.target.value)} />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* CONSORCIO */}
+                    <div style={{ marginTop: '1rem', border: '1px solid #e5e7eb', padding: '1rem', borderRadius: '0.5rem' }}>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontWeight: 600, color: '#374151' }}>
+                                Administración del Consorcio
+                            </label>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div>
+                                <label className="label" style={{ fontSize: '0.85rem' }}>Teléfono / Contacto</label>
+                                <input type="text" className="input" placeholder="Ej: 4444-5555" value={formData.buildingAdminContact || ''} onChange={e => handleChange('buildingAdminContact', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className="label" style={{ fontSize: '0.85rem' }}>Email</label>
+                                <input type="email" className="input" placeholder="consorcio@edificio.com" value={formData.buildingAdminEmail || ''} onChange={e => handleChange('buildingAdminEmail', e.target.value)} />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <section className="card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <input 
                             type="checkbox" 
                             id="isRented" 

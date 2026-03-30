@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { propertyService } from '../services/propertyService';
 import { indexService } from '../services/indexService';
+import { uploadToCloudinary } from '../services/cloudinary';
 import type { RentalContract } from '../types';
-import { Save, Calendar, StickyNote } from 'lucide-react';
+import { Save, Calendar, StickyNote, Upload, FileText, X } from 'lucide-react';
 
 import RentPaymentsList from './RentPaymentsList';
 import ContractMessages from './ContractMessages';
@@ -24,6 +25,7 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
 
     const [allContracts, setAllContracts] = useState<RentalContract[]>([]);
     const [viewingOldContractId, setViewingOldContractId] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     const [formData, setFormData] = useState<Partial<RentalContract>>({
         currency: 'USD',
@@ -88,6 +90,21 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        setUploading(true);
+        try {
+            const file = e.target.files[0];
+            const url = await uploadToCloudinary(file);
+            handleChange('guaranteeUrl', url);
+        } catch (error) {
+            console.error("Error uploading file: ", error);
+            alert("Error al subir archivo a Cloudinary.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -102,6 +119,8 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                 tenantName: formData.tenantName || '',
                 tenantPhone: formData.tenantPhone || '',
                 tenantEmail: formData.tenantEmail || '',
+                securityDepositAmount: Number(formData.securityDepositAmount) || 0,
+                guaranteeUrl: formData.guaranteeUrl || '',
                 notes: formData.notes || ''
             };
 
@@ -223,6 +242,27 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                                 {isAutoCalculating ? 'Calculando...' : `${contract.currency} ${statusObj.currentAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
                             </div>
                         </div>
+                        </div>
+                        
+                        {(contract.securityDepositAmount || contract.guaranteeUrl) && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: '1px solid #ceead6', paddingLeft: '1rem' }}>
+                                {contract.securityDepositAmount && (
+                                    <>
+                                        <div style={{ fontSize: '0.85rem', color: '#5f6368' }}>Depósito en Garantía Original</div>
+                                        <div style={{ fontSize: '1rem', fontWeight: 600, color: '#3c4043' }}>
+                                            {contract.currency} {contract.securityDepositAmount.toLocaleString()}
+                                        </div>
+                                    </>
+                                )}
+                                {contract.guaranteeUrl && (
+                                    <div style={{ marginTop: '0.2rem' }}>
+                                        <a href={contract.guaranteeUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                            <FileText size={14} /> Ver Caución / Seguro
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {!statusObj.isFixed && (
@@ -319,6 +359,41 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                             <option value="FIJO">Valor Fijo sin ajuste</option>
                             <option value="OTRO">Otro pactado</option>
                         </select>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                    <div>
+                        <label className="label">Depósito en Garantía Inicial</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                           <div className="input" style={{ width: '80px', backgroundColor: '#f1f3f4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{formData.currency}</div>
+                           <input 
+                               type="number" 
+                               className="input" 
+                               placeholder="0.00"
+                               value={formData.securityDepositAmount || ''}
+                               onChange={e => handleChange('securityDepositAmount', parseFloat(e.target.value))}
+                           />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="label">Garantía / Seguro de Caución (PDF/Foto)</label>
+                        {formData.guaranteeUrl ? (
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                <a href={formData.guaranteeUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ flex: 1, textAlign: 'center', backgroundColor: '#eef2ff', borderColor: '#c7d2fe', color: '#4f46e5' }}>
+                                    <FileText size={18} /> Ver Garantía
+                                </a>
+                                <button type="button" className="btn btn-danger" onClick={() => handleChange('guaranteeUrl', null)}>
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        ) : (
+                            <label className="btn btn-secondary" style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer', width: '100%' }}>
+                                <Upload size={18} />
+                                {uploading ? 'Subiendo...' : 'Subir Documento'}
+                                <input type="file" accept=".pdf,image/*" hidden onChange={handleFileUpload} disabled={uploading}/>
+                            </label>
+                        )}
                     </div>
                 </div>
 
