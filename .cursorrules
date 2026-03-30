@@ -1,9 +1,11 @@
 # Mantenimiento de Versiones
 
 Cada vez que realices una modificación estructural al código (nuevas funciones, correcciones de errores, refactorizaciones, etc.):
-1. **DEBES actualizar el archivo `package.json`** incrementando la versión ("version": "x.y.z").
+1. **DEBES actualizar DOS archivos de versionado**:
+   - `package.json` incrementando la versión ("version": "x.y.z").
+   - `src/version.ts` actualizando la constante exportada (`export const APP_VERSION = 'v...';`).
 2. Si es una adición menor o corrección, incrementa el parche (z).
-3. Si es una nueva funcionalidad importante (Features como las de Colaboración Inquilino-Propietario), incrementa (y).
-4. Luego de hacer el bump, asegúrate de documentarlo en el commit que vayas a realizar antes de enviar a Producción (Vercel).
+3. Si es una nueva funcionalidad importante (Features como las de Colaboración), incrementa (y).
+4. Luego de hacer el bump simétrico en ambos archivos, documentalo en el commit antes del push a Producción.
 
-¡Esta regla es estricta e inquebrantable para mantener el versionado semántico en orden!
+¡Esta regla es estricta e inquebrantable para que el frontend coincida con el engine!
