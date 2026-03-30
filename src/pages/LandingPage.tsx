@@ -188,9 +188,6 @@ const LandingPage: React.FC = () => {
                 {/* Call to action */}
                 <section className="cta-banner">
                     <h2 className="cta-banner-title">¿Listo para modernizar tu forma de alquilar?</h2>
-                    <p className="cta-banner-text">
-                        Uníte a cientos de administradores y miles de inquilinos que ya confían en AdminProp.
-                    </p>
                     <Link to="/login" className="btn-accent">Empezar ahora (Gratis)</Link>
                 </section>
 
