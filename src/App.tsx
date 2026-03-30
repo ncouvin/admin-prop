@@ -14,6 +14,7 @@ import CalendarView from './pages/CalendarView';
 import AdminCoupons from './pages/AdminCoupons';
 import UpgradePlan from './pages/UpgradePlan';
 import ServicePaymentsPage from './pages/ServicePaymentsPage';
+import LandingPage from './pages/LandingPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -27,14 +28,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
 
-      <Route path="/" element={
+      <Route element={
         <ProtectedRoute>
           <Layout />
         </ProtectedRoute>
       }>
-        <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="properties" element={<Properties />} />
         <Route path="properties/new" element={<PropertyForm />} />
