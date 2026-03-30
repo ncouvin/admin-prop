@@ -22,7 +22,7 @@ const Login: React.FC = () => {
             <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '2rem', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderRadius: '12px', backgroundColor: '#ffffff' }}>
                 <h1 style={{ marginBottom: '0.5rem', color: '#1a73e8' }}>Admin Prop</h1>
                 <h2 style={{ marginBottom: '2rem', color: '#5f6368', fontSize: '1.2rem', fontWeight: 'normal' }}>
-                    Panel de Administración
+                    Panel de Ingreso
                 </h2>
 
                 {error && <p style={{ color: '#d93025', fontSize: '0.875rem', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#fce8e6', borderRadius: '4px' }}>{error}</p>}
@@ -56,9 +56,6 @@ const Login: React.FC = () => {
                     </svg>
                     Acceder con Google
                 </button>
-                <p style={{ marginTop: '2rem', fontSize: '0.8rem', color: '#9aa0a6' }}>
-                    Solo los propietarios pueden administrar inmuebles
-                </p>
             </div>
         </div>
     );
