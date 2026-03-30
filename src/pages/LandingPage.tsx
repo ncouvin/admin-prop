@@ -181,18 +181,16 @@ const LandingPage: React.FC = () => {
                     <div className="footer-column">
                         <h4>Plataforma</h4>
                         <ul>
-                            <li><Link to="/login">Home</Link></li>
-                            <li><span style={{ cursor: 'not-allowed', color: '#9ca3af' }}>Pagar un alquiler</span></li>
-                            <li><Link to="/login">Login del Inquilino</Link></li>
-                            <li><Link to="/login">Login de Propietario</Link></li>
+                            <li><Link to="/">Home</Link></li>
+                            <li><Link to="/login">Ingresar</Link></li>
                         </ul>
                     </div>
 
                     <div className="footer-column">
                         <h4>Empresa</h4>
                         <ul>
-                            <li><a href="#">Términos y Condiciones</a></li>
-                            <li><a href="#">Privacidad de Datos</a></li>
+                            <li><Link to="/terms">Términos y Condiciones</Link></li>
+                            <li><Link to="/privacy">Privacidad de Datos</Link></li>
                         </ul>
                     </div>
 

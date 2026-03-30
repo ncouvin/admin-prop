@@ -15,6 +15,8 @@ import AdminCoupons from './pages/AdminCoupons';
 import UpgradePlan from './pages/UpgradePlan';
 import ServicePaymentsPage from './pages/ServicePaymentsPage';
 import LandingPage from './pages/LandingPage';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -30,6 +32,8 @@ const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
 
       <Route element={
         <ProtectedRoute>
