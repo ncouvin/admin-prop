@@ -20,7 +20,17 @@ const Login: React.FC = () => {
     return (
         <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
             <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '2rem', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', borderRadius: '12px', backgroundColor: '#ffffff' }}>
-                <h1 style={{ marginBottom: '0.5rem', color: '#1a73e8' }}>Admin Prop</h1>
+                <img 
+                    src="/logo.png" 
+                    alt="Admin Prop Logo" 
+                    style={{ width: '220px', height: 'auto', objectFit: 'contain', margin: '0 auto 1rem auto', display: 'block' }} 
+                    onError={(e) => { 
+                        e.currentTarget.style.display = 'none';
+                        const fallback = document.getElementById('login-fallback-title');
+                        if (fallback) fallback.style.display = 'block';
+                    }} 
+                />
+                <h1 id="login-fallback-title" style={{ marginBottom: '0.5rem', color: '#1a73e8', display: 'none' }}>Admin Prop</h1>
                 <h2 style={{ marginBottom: '2rem', color: '#5f6368', fontSize: '1.2rem', fontWeight: 'normal' }}>
                     Panel de Ingreso
                 </h2>
