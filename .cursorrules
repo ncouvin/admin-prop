@@ -1,0 +1,9 @@
+# Mantenimiento de Versiones
+
+Cada vez que realices una modificación estructural al código (nuevas funciones, correcciones de errores, refactorizaciones, etc.):
+1. **DEBES actualizar el archivo `package.json`** incrementando la versión ("version": "x.y.z").
+2. Si es una adición menor o corrección, incrementa el parche (z).
+3. Si es una nueva funcionalidad importante (Features como las de Colaboración Inquilino-Propietario), incrementa (y).
+4. Luego de hacer el bump, asegúrate de documentarlo en el commit que vayas a realizar antes de enviar a Producción (Vercel).
+
+¡Esta regla es estricta e inquebrantable para mantener el versionado semántico en orden!
