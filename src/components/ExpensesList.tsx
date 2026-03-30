@@ -69,9 +69,9 @@ const ExpensesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
             setAmount('');
             setReceiptFile(null);
             await loadExpenses();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error adding expense", error);
-            alert("Hubo un error al guardar el arreglo.");
+            alert(`Hubo un error al guardar el arreglo: ${error.message || error}`);
         } finally {
             setUploading(false);
         }
