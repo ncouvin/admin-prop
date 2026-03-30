@@ -44,7 +44,7 @@ const LandingPage: React.FC = () => {
 
                     <div style={{ width: '100%', maxWidth: '900px', margin: '0 auto', display: 'flex', justifyContent: 'center' }}>
                         <img 
-                            src="/dashboard.png" 
+                            src="/dashboard.jfif" 
                             alt="Dashboard de AdminProp" 
                             style={{ 
                                 width: '100%', 
