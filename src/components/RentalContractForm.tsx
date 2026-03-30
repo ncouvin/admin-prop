@@ -242,7 +242,6 @@ const RentalContractForm: React.FC<Props> = ({ propertyId, isTenantView = false 
                                 {isAutoCalculating ? 'Calculando...' : `${contract.currency} ${statusObj.currentAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
                             </div>
                         </div>
-                        </div>
                         
                         {(contract.securityDepositAmount || contract.guaranteeUrl) && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderLeft: '1px solid #ceead6', paddingLeft: '1rem' }}>
