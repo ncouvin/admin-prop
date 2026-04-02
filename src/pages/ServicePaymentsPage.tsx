@@ -83,20 +83,17 @@ const ServicePaymentsPage: React.FC = () => {
             if (invoiceFile) invUrl = await uploadToCloudinary(invoiceFile);
             if (receiptFile) recUrl = await uploadToCloudinary(receiptFile);
 
-            const existing = payments.find(p => p.month === month && p.year === year);
-
             const rawData: Partial<ServicePayment> = {
-                id: existing?.id || '',
                 serviceId: service.id,
                 propertyId,
                 year,
                 month,
-                status: (recUrl || existing?.receiptUrl) ? 'paid' : 'pending',
-                amount: amount ? parseFloat(amount) : existing?.amount,
-                invoiceUrl: invUrl || existing?.invoiceUrl,
-                receiptUrl: recUrl || existing?.receiptUrl,
-                paymentDate: (recUrl && !existing?.receiptUrl) ? new Date().toISOString() : existing?.paymentDate,
-                isVerified: existing?.isVerified || false
+                status: recUrl ? 'paid' : 'pending',
+                amount: amount ? parseFloat(amount) : undefined,
+                invoiceUrl: invUrl || undefined,
+                receiptUrl: recUrl || undefined,
+                paymentDate: recUrl ? new Date().toISOString() : undefined,
+                isVerified: false
             };
 
             const paymentData = { ...rawData } as ServicePayment;
@@ -177,6 +174,13 @@ const ServicePaymentsPage: React.FC = () => {
     if (loading || !service) {
         return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando información del servicio...</div>;
     }
+
+    const groupedPayments = payments.reduce((acc, pay) => {
+        const key = `${pay.year}-${pay.month}`;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(pay);
+        return acc;
+    }, {} as Record<string, ServicePayment[]>);
 
     return (
         <div className="fade-in" style={{ padding: '1.5rem', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
@@ -259,9 +263,22 @@ const ServicePaymentsPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {payments.map(pay => (
+                                {Object.keys(groupedPayments).map(groupKey => {
+                                    const group = groupedPayments[groupKey];
+                                    const [gYear, gMonth] = groupKey.split('-');
+                                    const totalAmount = group.reduce((sum, p) => sum + (p.amount || 0), 0);
+                                    
+                                    return (
+                                        <React.Fragment key={groupKey}>
+                                            <tr style={{ backgroundColor: '#e8f0fe', borderBottom: '2px solid #1a73e8' }}>
+                                                <td colSpan={6} style={{ padding: '0.8rem 1rem', fontWeight: 700, color: '#1a73e8', fontSize: '1.1rem' }}>
+                                                    {getMonthName(Number(gMonth))} / {gYear} &nbsp;&nbsp;—&nbsp;&nbsp;
+                                                    Total Abonado del Mes: ${totalAmount.toLocaleString()}
+                                                </td>
+                                            </tr>
+                                            {group.map((pay, index) => (
                                     <tr key={pay.id} style={{ borderBottom: '1px solid #dadce0', backgroundColor: pay.isVerified ? '#f6fdf6' : '#fff', transition: 'background-color 0.2s' }}>
-                                        <td style={{ padding: '1rem', fontWeight: 600, fontSize: '1.1rem' }}>{getMonthName(pay.month)} / {pay.year}</td>
+                                        <td style={{ padding: '1rem', fontWeight: 500, fontSize: '0.95rem', color: '#5f6368', paddingLeft: '1.5rem' }}>↳ Reporte Parcial #{index + 1}</td>
                                         <td style={{ padding: '1rem', fontWeight: 600, color: '#1a73e8', fontSize: '1.1rem' }}>
                                             {editingId === pay.id ? (
                                                 <input type="number" step="0.01" className="input" style={{ width: '100px', padding: '0.4rem' }} value={editAmount} onChange={e => setEditAmount(e.target.value)} />
@@ -340,7 +357,10 @@ const ServicePaymentsPage: React.FC = () => {
                                             )}
                                         </td>
                                     </tr>
-                                ))}
+                                    ))}
+                                        </React.Fragment>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

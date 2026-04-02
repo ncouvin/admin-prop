@@ -29,7 +29,7 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
     const [editForm, setEditForm] = useState<Partial<PropertyService>>({});
 
     // Estado de pagos indexado: pagos[serviceId][month]
-    const [payments, setPayments] = useState<{ [serviceId: string]: { [month: number]: ServicePayment } }>({});
+    const [payments, setPayments] = useState<{ [serviceId: string]: { [month: number]: ServicePayment[] } }>({});
     const currentYear = new Date().getFullYear();
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -40,13 +40,14 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
             setServices(fetchedServs);
 
             // Cargar los pagos para cada servicio para el año en curso
-            const payDict: { [serviceId: string]: { [month: number]: ServicePayment } } = {};
+            const payDict: { [serviceId: string]: { [month: number]: ServicePayment[] } } = {};
             
             for (const serv of fetchedServs) {
                 payDict[serv.id] = {};
                 const sPayments = await propertyService.getServicePayments(propertyId, serv.id, currentYear);
                 sPayments.forEach(p => {
-                    payDict[serv.id][p.month] = p;
+                    if (!payDict[serv.id][p.month]) payDict[serv.id][p.month] = [];
+                    payDict[serv.id][p.month].push(p);
                 });
             }
             setPayments(payDict);
@@ -119,15 +120,8 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
 
         try {
             await propertyService.saveServicePayment(propertyId, serviceId, paymentData);
-            // Refresco local de estado optimista
-            setPayments(prev => ({
-                ...prev,
-                [serviceId]: {
-                    ...prev[serviceId],
-                    [month]: paymentData
-                }
-            }));
-            if (!paymentData.id) loadData(); // Reload for real IDs if it was new
+            // Hacer full reload es más seguro para obtener los arrays actualizados
+            loadData();
         } catch (error) {
             console.error("Error toggle payment", error);
             alert("Error al actualizar pago.");
@@ -287,8 +281,12 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                                     </td>
                                     
                                     {months.map(m => {
-                                        const payment = payments[srv.id]?.[m];
-                                        const isPaid = payment?.status === 'paid';
+                                        const monthPayments = payments[srv.id]?.[m] || [];
+                                        const isPaid = monthPayments.some(p => p.status === 'paid');
+                                        const totalAmount = monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                                        const firstReceipt = monthPayments.find(p => p.receiptUrl)?.receiptUrl;
+                                        const referencePayment = monthPayments.length > 0 ? monthPayments[0] : undefined;
+                                        
                                         const isUploading = uploading === `${srv.id}-${m}`;
 
                                         return (
@@ -296,7 +294,7 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
                                                     {/* Toggle Button */}
                                                     <button 
-                                                        onClick={() => handleTogglePaymentStatus(srv.id, m, payment)}
+                                                        onClick={() => handleTogglePaymentStatus(srv.id, m, referencePayment)}
                                                         title={isPaid ? "Marcar Pendiente" : "Marcar Pagado"}
                                                         disabled={isTenantView}
                                                         style={{ background: 'none', border: 'none', cursor: isTenantView ? 'default' : 'pointer', padding: '4px', borderRadius: '50%', backgroundColor: isPaid ? '#e6f4ea' : '#fce8e6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -305,13 +303,13 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                                                     </button>
                                                     
                                                     {/* Receipt Logic */}
-                                                    {payment?.receiptUrl ? (
+                                                    {firstReceipt ? (
                                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                            <a href={payment.receiptUrl} target="_blank" rel="noreferrer" title="Ver Comprobante" style={{ color: '#1a73e8' }}>
+                                                            <a href={firstReceipt} target="_blank" rel="noreferrer" title="Ver Comprobante Principal" style={{ color: '#1a73e8' }}>
                                                                 <ExternalLink size={14} />
                                                             </a>
-                                                            {payment.amount !== undefined && (
-                                                                <div style={{ fontSize: '0.65rem', color: '#1a73e8', fontWeight: 600 }}>${payment.amount}</div>
+                                                            {totalAmount > 0 && (
+                                                                <div style={{ fontSize: '0.65rem', color: '#1a73e8', fontWeight: 600 }}>${totalAmount.toLocaleString()}</div>
                                                             )}
                                                         </div>
                                                     ) : (
@@ -322,7 +320,7 @@ const ServicesList: React.FC<Props> = ({ propertyId, isTenantView = false }) => 
                                                                 accept="image/*,.pdf" 
                                                                 hidden 
                                                                 disabled={isUploading}
-                                                                onChange={(e) => handleUploadReceipt(srv.id, m, e, payment)}
+                                                                onChange={(e) => handleUploadReceipt(srv.id, m, e, referencePayment)}
                                                             />
                                                         </label>
                                                     )}
