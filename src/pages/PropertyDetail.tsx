@@ -206,13 +206,13 @@ const PropertyDetail: React.FC = () => {
                             </div>
 
                             {/* DOCUMENTOS */}
-                            {(property.deedUrl || property.coownershipRulebookUrl || property.internalRulebookUrl || property.currentContractUrl) && (
+                            {((!isTenantView && property.deedUrl) || property.coownershipRulebookUrl || property.internalRulebookUrl || property.currentContractUrl) && (
                                 <div className="card">
                                     <h3 style={{ marginBottom: '1.5rem', color: '#202124', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <FileText size={20} color="#1a73e8" /> Documentación de la Propiedad
                                     </h3>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                                        {property.deedUrl && (
+                                        {!isTenantView && property.deedUrl && (
                                             <a href={property.deedUrl} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 <FileText size={16} /> Escritura
                                             </a>
