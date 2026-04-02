@@ -3,7 +3,7 @@ import type { Property } from '../types';
 import { propertyService } from '../services/propertyService';
 import { useAuth } from '../context/AuthContext';
 import PropertyCard from '../components/PropertyCard';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { indexService } from '../services/indexService';
 
@@ -17,6 +17,8 @@ interface ExtendedProperty extends Property {
 const Properties: React.FC = () => {
     const [properties, setProperties] = useState<ExtendedProperty[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'ALL' | 'RENTED' | 'AVAILABLE'>('ALL');
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -104,20 +106,56 @@ const Properties: React.FC = () => {
         loadProperties();
     }, [user]);
 
-    if (loading) return <div>Cargando tus propiedades...</div>;
+    const filteredProperties = properties.filter(p => {
+        const term = searchTerm.toLowerCase();
+        const matchesText = !term 
+            || p.name.toLowerCase().includes(term)
+            || p.address.toLowerCase().includes(term);
+
+        const matchesStatus = statusFilter === 'ALL' 
+            || (statusFilter === 'RENTED' && p.hasActiveContract)
+            || (statusFilter === 'AVAILABLE' && !p.hasActiveContract);
+
+        return matchesText && matchesStatus;
+    });
+
+    if (loading) return <div style={{ padding: '2rem', textAlign: 'center', color: '#5f6368' }}>Cargando tus propiedades...</div>;
 
     return (
         <div className="fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <div>
                     <h2 style={{ fontSize: '1.75rem', marginBottom: '0.25rem', color: '#202124' }}>Tus Propiedades</h2>
-                    <p style={{ color: '#5f6368' }}>El corazón financiero de tu sistema</p>
+                    <p style={{ color: '#5f6368', margin: 0 }}>El corazón financiero de tu sistema</p>
                 </div>
-
-                <button className="btn btn-primary" onClick={() => navigate('/properties/new')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#1a73e8', color: 'white', padding: '0.75rem 1.25rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
+                <button className="btn btn-primary" onClick={() => navigate('/properties/new')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#1a73e8', color: 'white', padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
                     <Plus size={20} />
-                    Alta de Propiedad
+                    Alta
                 </button>
+            </div>
+
+            <div className="card" style={{ padding: '1rem', marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'nowrap' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                    <Search size={18} color="#9aa0a6" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input 
+                        type="text" 
+                        className="input" 
+                        placeholder="Buscar por barrio, calle, nombre..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ paddingLeft: '2.5rem', width: '100%', margin: 0 }}
+                    />
+                </div>
+                <select 
+                    className="input" 
+                    value={statusFilter} 
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    style={{ width: '250px', margin: 0 }}
+                >
+                    <option value="ALL">Todas las Propiedades</option>
+                    <option value="RENTED">Solo Alquiladas</option>
+                    <option value="AVAILABLE">Solo Disponibles</option>
+                </select>
             </div>
 
             {properties.length === 0 ? (
@@ -127,9 +165,13 @@ const Properties: React.FC = () => {
                         Agregar mi primera propiedad
                     </button>
                 </div>
+            ) : filteredProperties.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#5f6368', fontSize: '1.1rem' }}>
+                    No se encontraron propiedades que coincidan con tu búsqueda.
+                </div>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                    {properties.map(prop => (
+                    {filteredProperties.map(prop => (
                         <PropertyCard 
                             key={prop.id} 
                             property={prop} 

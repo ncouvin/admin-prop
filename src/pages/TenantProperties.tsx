@@ -4,7 +4,7 @@ import { propertyService } from '../services/propertyService';
 import { indexService } from '../services/indexService';
 import type { Property } from '../types';
 import PropertyCard from '../components/PropertyCard';
-import { Key } from 'lucide-react';
+import { Key, Search } from 'lucide-react';
 
 interface ExtendedProperty extends Property {
     currentRentAmount?: number;
@@ -17,6 +17,7 @@ const TenantProperties: React.FC = () => {
     const [properties, setProperties] = useState<ExtendedProperty[]>([]);
     const [loading, setLoading] = useState(true);
     const [linking, setLinking] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const loadRentedProperties = async () => {
         if (!user) return;
@@ -106,14 +107,33 @@ const TenantProperties: React.FC = () => {
         }
     };
 
+    const filteredProperties = properties.filter(p => {
+        const term = searchTerm.toLowerCase();
+        return !term || p.name.toLowerCase().includes(term) || p.address.toLowerCase().includes(term);
+    });
+
     return (
         <div style={{ padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#202124' }}>Propiedades Alquiladas por Mí</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#202124', margin: 0 }}>Propiedades Alquiladas por Mí</h1>
                 <button onClick={handleLinkContract} disabled={linking} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Key size={18} />
                     {linking ? 'Vinculando...' : 'Vincular nuevo alquiler'}
                 </button>
+            </div>
+
+            <div className="card" style={{ padding: '1rem', marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                    <Search size={18} color="#9aa0a6" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                    <input 
+                        type="text" 
+                        className="input" 
+                        placeholder="Buscar por calle, barrio, nombre..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ paddingLeft: '2.5rem', width: '100%', margin: 0 }}
+                    />
+                </div>
             </div>
 
             {loading ? (
@@ -124,9 +144,13 @@ const TenantProperties: React.FC = () => {
                     <p style={{ fontSize: '1.2rem', color: '#5f6368' }}>Aún no tienes propiedades alquiladas vinculadas.</p>
                     <p style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>Pídele al propietario el <strong>ID de Vinculación del Contrato</strong> y haz clic en el botón superior derecho.</p>
                 </div>
+            ) : filteredProperties.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#5f6368', fontSize: '1.1rem' }}>
+                    No se encontraron alquileres que coincidan con tu búsqueda.
+                </div>
             ) : (
                 <div className="grid">
-                    {properties.map(property => (
+                    {filteredProperties.map(property => (
                         <PropertyCard 
                             key={property.id} 
                             property={property} 
