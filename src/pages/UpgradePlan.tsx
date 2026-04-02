@@ -80,7 +80,8 @@ const UpgradePlan: React.FC = () => {
                 body: JSON.stringify({ 
                     packId: selectedPack.id, 
                     userId: user.id, 
-                    couponCode: activeCoupon?.code || null 
+                    couponCode: activeCoupon?.code || null,
+                    finalPrice: finalPrice
                 })
             });
             

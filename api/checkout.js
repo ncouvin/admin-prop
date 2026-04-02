@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { packId, userId, couponCode } = req.body;
+        const { packId, userId, couponCode, finalPrice: reqFinalPrice } = req.body;
         
         // El Access Token por defecto o por entorno
         const accessToken = process.env.MP_ACCESS_TOKEN || 'APP_USR-8369466794294561-032916-d51b109fbdb1ce44ab024c0e1978f790-17939630';
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         const activePack = PACKAGES[packId];
         if (!activePack) return res.status(400).json({ error: 'Pack inválido' });
 
-        let finalPrice = activePack.price;
+        let finalPrice = reqFinalPrice !== undefined ? reqFinalPrice : activePack.price;
 
         // NOTA: Si quisiéramos validar el cupón en tiempo real aquí (más seguro),
         // deberíamos instanciar firebase-admin, buscar el documento en "coupons" y re-aplicar descuento.
