@@ -6,9 +6,9 @@ import { userService } from '../services/userService';
 import { ShieldCheck, Tag, Zap, Building2, ChevronRight } from 'lucide-react';
 
 const PACKAGES = [
-    { id: '1', units: 1, basePrice: 2000, title: 'Adicionar 1 Propiedad' },
-    { id: '5', units: 5, basePrice: 8000, title: 'Pack 5 Propiedades' },
-    { id: '10', units: 10, basePrice: 15000, title: 'Mega Pack 10 Propiedades' }
+    { id: '1', units: 1, basePrice: 4000, title: 'Adicionar 1 Propiedad' },
+    { id: '5', units: 5, basePrice: 15000, title: 'Pack 5 Propiedades' },
+    { id: '10', units: 10, basePrice: 20000, title: 'Mega Pack 10 Propiedades' }
 ];
 
 const UpgradePlan: React.FC = () => {

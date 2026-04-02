@@ -17,9 +17,9 @@ export default async function handler(req, res) {
 
         // Definimos los precios base
         const PACKAGES = {
-            '1': { title: '1 Propiedad Extra', price: 2000 },
-            '5': { title: '5 Propiedades Extra', price: 8000 },
-            '10': { title: '10 Propiedades Extra', price: 15000 }
+            '1': { title: '1 Propiedad Extra', price: 4000 },
+            '5': { title: '5 Propiedades Extra', price: 15000 },
+            '10': { title: '10 Propiedades Extra', price: 20000 }
         };
 
         const activePack = PACKAGES[packId];
